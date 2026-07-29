@@ -1,0 +1,174 @@
+/* Custom CSS strictly for standard PHP pages (Index, Login, Add Reservation) */
+* {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.landing-body, .login-body, .admin-body {
+    background-color: #f8fafc;
+    color: #334155;
+    margin: 0;
+    padding: 0;
+}
+
+/* Landing & Login */
+.landing-container, .login-card {
+    max-width: 400px;
+    margin: 100px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    border: 1px solid #f1f5f9;
+}
+
+/* Reservation Form */
+.form-container {
+    max-width: 800px;
+    margin: 30px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 20px auto 0;
+}
+
+.grid-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 600px) {
+    .grid-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #64748b;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.form-group input, .form-group select {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Buttons */
+.btn-primary {
+    display: inline-block;
+    background-color: #046a38;
+    color: white;
+    padding: 12px 20px;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.btn-primary:hover {
+    background-color: #03542c;
+}
+
+.btn-secondary {
+    display: inline-block;
+    background-color: #e2e8f0;
+    color: #334155;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+/* Notifications */
+.error-msg {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fca5a5;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.success-msg {
+    background-color: #ecfdf5;
+    color: #10b981;
+    border: 1px solid #6ee7b7;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.data-table th, .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 14px;
+}
+
+.data-table th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.btn-delete {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fca5a5;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+}
