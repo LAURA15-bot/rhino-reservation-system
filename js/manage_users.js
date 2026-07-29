@@ -1,6 +1,22 @@
 // js/manage_users.js
 
-document.addEventListener("DOMContentLoaded", loadUsers);
+document.addEventListener("DOMContentLoaded", () => {
+    // Initial Load
+    loadUsers();
+
+    // =======================================================
+    // REAL-TIME BACKGROUND POLLING ENGINE (Every 15 seconds)
+    // =======================================================
+    setInterval(() => {
+        // Prevent background refresh from disrupting a user typing in the modal
+        const backdrop = document.getElementById('user-modal-backdrop');
+        const isModalOpen = backdrop && !backdrop.classList.contains('hidden');
+        
+        if (!isModalOpen) {
+            loadUsers();
+        }
+    }, 15000);
+});
 
 function loadUsers() {
     fetch('api/manage_users_api.php')
@@ -16,12 +32,15 @@ function loadUsers() {
                 }
 
                 res.data.forEach(user => {
+                    // Normalize the role check
                     const isSystemAdmin = (user.role.toLowerCase() === 'admin');
                     
+                    // Format role badge to match your screenshot
                     const roleBadge = isSystemAdmin 
                         ? '<span class="px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-[10px] font-bold text-blue-600 uppercase tracking-wider">ADMIN</span>' 
                         : '<span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">CONSULTANT</span>';
                     
+                    // Display name formatting
                     const displayName = user.display_name && user.display_name.trim() !== '' 
                         ? user.display_name 
                         : (isSystemAdmin ? 'System Administrator' : 'Standard Operator');
@@ -44,7 +63,7 @@ function loadUsers() {
                             <td class="py-4 px-6 text-sm font-bold text-slate-800">${escapeHtml(displayName)}</td>
                             <td class="py-4 px-6 text-sm text-slate-400 font-mono">${escapeHtml(user.username)}</td>
                             <td class="py-4 px-6">${roleBadge}</td>
-                            <td class="py-4 px-6 text-right text-xs">
+                            <td class="py-4 px-6 text-right space-x-2 text-xs">
                                 ${actionsHtml}
                             </td>
                         </tr>

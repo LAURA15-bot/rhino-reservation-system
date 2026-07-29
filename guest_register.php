@@ -43,14 +43,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 
                 <!-- Page Header & Filters (Fixed at top of content area) -->
                 <div class="shrink-0 space-y-6">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h2 class="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
-                                <i class="fa-solid fa-address-book text-[#046a38]"></i> Guest Register
-                            </h2>
-                            <p class="text-sm text-slate-500 mt-1 font-medium">Historical and permanent audit record of all visitors.</p>
-                        </div>
-                    </div>
 
                     <div class="bg-white p-4 rounded-2xl custom-shadow border border-slate-100 flex flex-wrap items-end justify-between gap-4">
                         <!-- Left Side: Date Filter -->

@@ -148,6 +148,10 @@ if (!isset($_SESSION['logged_in'])) {
                 </div>
 
             </div>
+
+            <!-- 4. GLOBAL FOOTER -->
+            <?php include 'Includes/footer.php'; ?>
+            
         </main>
     </div>
 
@@ -261,6 +265,5 @@ if (!isset($_SESSION['logged_in'])) {
         </div>
     </div>
 
-    <?php include 'Includes/footer.php'; ?>
 </body>
 </html>

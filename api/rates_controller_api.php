@@ -14,18 +14,20 @@ if (!isset($_SESSION['logged_in'])) {
 require '../Includes/database.php';
 header('Content-Type: application/json');
 
-// Handle POST request to update rates
+// Handle POST request to update rates (STRICTLY ADMIN ONLY)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_rates') {
-    // Optional: restrict rate modifications strictly to Admins if desired
-    // if (strtolower($_SESSION['role'] ?? '') !== 'admin') {
-    //     echo json_encode(['success' => false, 'message' => 'Unauthorized action']);
-    //     exit;
-    // }
+    
+    // Security verification
+    if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized action. Admin privileges required.']);
+        exit;
+    }
 
     try {
         $season = $_POST['season'];
         $tier = $_POST['tier'];
         $rates = json_decode($_POST['rates'], true);
+        $ip = $_SERVER['REMOTE_ADDR'];
         
         $stmt = $pdo->prepare("UPDATE system_rates SET ksh_rate = ?, usd_rate = ? WHERE season = ? AND room_tier = ? AND room_config = ?");
         foreach($rates as $config => $vals) {
@@ -38,8 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ]);
         }
 
-        // Log action
-        $pdo->prepare("INSERT INTO system_logs (username, action) VALUES (?, ?)")->execute([$_SESSION['username'], "Updated rates for $season ($tier)"]);
+        // Corporate Security Audit Log
+        $logAction = "Modified system rate matrix for $season ($tier).";
+        $pdo->prepare("INSERT INTO system_logs (username, role, action_code, action, ip_address) VALUES (?, ?, 'RATES_UPDATE', ?, ?)")
+            ->execute([$_SESSION['username'], $_SESSION['role'], $logAction, $ip]);
 
         ob_clean();
         echo json_encode(['success' => true]);
@@ -50,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Handle GET request to fetch rates matrix
+// Handle GET request to fetch rates matrix (Allowed for all logged-in users)
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'fetch_rates') {
     try {
         $stmt = $pdo->query("SELECT * FROM system_rates");

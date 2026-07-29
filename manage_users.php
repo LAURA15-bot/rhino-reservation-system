@@ -15,42 +15,60 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="js/manage_users.js" defer></script>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 font-sans flex h-screen overflow-hidden">
+<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased min-h-screen overflow-hidden">
     
-    <?php include 'Includes/sidebar.php'; ?>
-    
-    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+    <!-- FULL SCREEN WRAPPER -->
+    <div class="flex h-screen w-screen overflow-hidden">
         
-        <!-- Corporate Identity Security Manager Container -->
-        <div class="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden max-w-7xl mx-auto mt-4">
+        <!-- 1. LEFT SIDEBAR -->
+        <?php include 'Includes/sidebar.php'; ?>
+
+        <!-- RIGHT CONTENT AREA -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc]">
             
-            <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
-                <h2 class="text-sm font-mono font-bold tracking-widest text-[#0f172a] uppercase">Corporate Identity Security Manager</h2>
-                <button onclick="openUserModal('add')" class="bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Register New Workspace User
-                </button>
+            <!-- 2. GLOBAL HEADER -->
+            <?php include 'Includes/header.php'; ?>
+
+            <!-- 3. SCROLLING MAIN CONTENT (Y-AXIS ISOLATION SET HERE) -->
+            <div class="flex-1 p-4 lg:p-6 flex flex-col min-h-0 overflow-hidden">
+                
+                <!-- Corporate Identity Security Manager Container -->
+                <div class="flex-1 bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col min-h-0 overflow-hidden max-w-7xl mx-auto w-full">
+                    
+                    <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between bg-white shrink-0 gap-4">
+                        <h2 class="text-sm font-mono font-bold tracking-widest text-[#0f172a] uppercase">Corporate Identity Security Manager</h2>
+                        <button onclick="openUserModal('add')" class="bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Register New Workspace User
+                        </button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="sticky top-0 z-10 bg-white border-b border-slate-100 text-xs text-slate-500 font-medium font-mono shadow-sm">
+                                <tr>
+                                    <th class="py-4 px-6 tracking-wide">User Index Mapping Target</th>
+                                    <th class="py-4 px-6 tracking-wide">System Username Handle</th>
+                                    <th class="py-4 px-6 tracking-wide">Assigned Authority Level Scope</th>
+                                    <th class="py-4 px-6 text-right tracking-wide">Console Management Vectors</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="text-sm divide-y divide-slate-50 font-mono">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
             </div>
-            
-            <div class="overflow-x-auto p-2">
-                <table class="w-full text-left whitespace-nowrap">
-                    <thead class="bg-white border-b border-slate-100 text-xs text-slate-500 font-medium font-mono">
-                        <tr>
-                            <th class="py-4 px-6 tracking-wide">User Index Mapping Target</th>
-                            <th class="py-4 px-6 tracking-wide">System Username Handle</th>
-                            <th class="py-4 px-6 tracking-wide">Assigned Authority Level Scope</th>
-                            <th class="py-4 px-6 text-right tracking-wide">Console Management Vectors</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody" class="text-sm divide-y divide-slate-50 font-mono">
-                        <!-- Populated dynamically via JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-    </main>
+
+            <!-- 4. GLOBAL FOOTER -->
+            <?php include 'Includes/footer.php'; ?>
+
+        </main>
+    </div>
 
     <!-- Account Profile Modal -->
     <div id="user-modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto transition-opacity">
