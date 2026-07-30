@@ -1,6 +1,11 @@
 // js/payment_billing.js
 
 let globalBillingData = [];
+let filteredRecords = [];
+
+// Pagination Variables
+let currentPage = 1;
+let rowsPerPage = 10;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadBillingData();
@@ -25,7 +30,7 @@ function loadBillingData(searchQuery = '') {
         .then(response => {
             if(response.success) {
                 globalBillingData = response.data;
-                renderBillingTable(globalBillingData);
+                filterBillingTable(); // Automatically handles pagination and rendering
             } else {
                 console.error("Failed to load billing ledger");
             }
@@ -44,87 +49,16 @@ function resetSearch() {
     loadBillingData('');
 }
 
-function renderBillingTable(data) {
-    const tbody = document.getElementById('billingTableBody');
-    tbody.innerHTML = '';
-    document.getElementById('records-counter-badge').innerText = `${data.length} Records Found`;
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 italic">No reservation records found.</td></tr>`;
-        return;
-    }
-
-    data.forEach(item => {
-        const res = item.res;
-        const pricingObj = item.pricingObj;
-        const currency = item.actualCurrency;
-        const total = item.total;
-        const discount = item.discount;
-        const paid = item.paid;
-        const bal = item.balance;
-        const status = item.computedStatus;
-        const isPastDue = item.isPastDue;
-
-        let badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-        if (status === 'Paid in Full') badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-        else if (status === 'Partially Paid') badgeClass = 'bg-amber-50 text-amber-700 border border-amber-200';
-        else if (status === 'Checked Out') badgeClass = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-
-        let sourceHtml = `<span class="font-bold text-slate-700">${escapeHtml(res.booking_source || 'Direct Client')}</span>`;
-        if (res.booking_source === 'Travel Agency') {
-            let displayAgencyName = (res.agency_name && res.agency_name.trim() !== '') ? res.agency_name : 'Agency name not specified';
-            sourceHtml += `<span class="block text-[10px] text-blue-600 font-bold mt-0.5">(${escapeHtml(displayAgencyName)})</span>`;
-        }
-
-        const tr = document.createElement('tr');
-        tr.className = "billing-row hover:bg-slate-50/70 transition bg-white";
-        tr.setAttribute('data-checkin', res.check_in);
-        tr.setAttribute('data-status', status);
-
-        let actionBtnHtml = '';
-        if (status !== 'Cancelled' && res.status !== 'Checked Out') {
-            if (isPastDue) {
-                actionBtnHtml = `<span class="px-2 py-1 bg-rose-100 border border-rose-200 text-rose-700 rounded font-bold text-[10px] uppercase">Expired Hold</span>`;
-            } else {
-                actionBtnHtml = `<button onclick='openPaymentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' class="bg-emerald-50 hover:bg-emerald-100 text-[#046a38] border border-emerald-100 font-bold px-3 py-1.5 rounded-lg transition text-xs"><i class="fa-solid fa-cash-register mr-1"></i> Pay</button>`;
-            }
-        }
-
-        tr.innerHTML = `
-            <td class="p-4"><span class="font-bold text-slate-900">#${res.id}</span> - ${escapeHtml(res.guest_name)}<span class="block text-[10px] text-slate-400 font-bold tracking-wider uppercase mt-0.5">${res.guest_type || 'Resident'}</span></td>
-            <td class="p-4 text-slate-500">${sourceHtml}</td>
-            <td class="p-4 text-center font-medium">${res.check_in} <span class="text-slate-400">to</span> ${res.check_out}</td>
-            <td class="p-4 text-center font-bold">${escapeHtml(res.room_type)}<span class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">${escapeHtml(res.room_tier || 'Superior Tent')}</span><span class="block text-[10px] text-slate-400 mt-0.5">${res.guests_count || 1} Guests</span></td>
-            <td class="p-4 text-right font-black text-slate-900">${currency} ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}${discount > 0 ? `<span class="block text-[10px] text-rose-500 italic mt-0.5">-${discount.toLocaleString(undefined, {minimumFractionDigits: 2})} Disc</span>` : ''}</td>
-            <td class="p-4 text-right font-bold text-emerald-600">${currency} ${paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td class="p-4 text-right font-black text-rose-600">${currency} ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            <td class="p-4 text-center"><span class="px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider inline-block ${badgeClass}">${status}</span></td>
-            <td class="p-4 text-center whitespace-nowrap space-x-1">
-                ${actionBtnHtml}
-                <button onclick='openDocumentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold px-3 py-1.5 rounded-lg transition text-xs"><i class="fa-solid fa-file-lines mr-1"></i> Docs</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    filterBillingTable();
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
+// 1. FILTER ENGINE
 function filterBillingTable() {
     const dateFilter = document.getElementById('dateFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
-    const rows = document.querySelectorAll('.billing-row');
     const today = new Date(); today.setHours(0,0,0,0);
 
-    rows.forEach(row => {
-        const rowDateStr = row.getAttribute('data-checkin');
-        const rowStatus = row.getAttribute('data-status');
-        const rowDate = new Date(rowDateStr); rowDate.setHours(0,0,0,0);
+    filteredRecords = globalBillingData.filter(item => {
+        const res = item.res;
+        const rowStatus = item.computedStatus;
+        const rowDate = new Date(res.check_in); rowDate.setHours(0,0,0,0);
 
         let showByDate = true;
         if (dateFilter === 'today') {
@@ -142,12 +76,127 @@ function filterBillingTable() {
             showByStatus = (rowStatus === statusFilter);
         }
 
-        if (showByDate && showByStatus) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        return showByDate && showByStatus;
     });
+
+    currentPage = 1;
+    renderTablePage();
+}
+
+// 2. PAGINATION CONTROLS
+window.changeRowsPerPage = function() {
+    const val = document.getElementById('rowsPerPageFilter').value;
+    rowsPerPage = val === 'all' ? 'all' : parseInt(val);
+    currentPage = 1;
+    renderTablePage();
+}
+
+window.changePage = function(direction) {
+    currentPage += direction;
+    renderTablePage();
+}
+
+// 3. TABLE RENDER ENGINE
+function renderTablePage() {
+    const tbody = document.getElementById('billingTableBody');
+    tbody.innerHTML = '';
+    
+    const totalRecords = filteredRecords.length;
+    document.getElementById('records-counter-badge').innerText = `${totalRecords} Records Found`;
+
+    if (totalRecords === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 dark:text-slate-500 italic">No reservation records found for the selected criteria.</td></tr>`;
+        updatePaginationUI(0, 0, 0);
+        return;
+    }
+
+    let startIndex = (currentPage - 1) * (rowsPerPage === 'all' ? totalRecords : rowsPerPage);
+    let endIndex = rowsPerPage === 'all' ? totalRecords : startIndex + rowsPerPage;
+    if (endIndex > totalRecords) endIndex = totalRecords;
+
+    const paginatedItems = rowsPerPage === 'all' ? filteredRecords : filteredRecords.slice(startIndex, endIndex);
+
+    paginatedItems.forEach(item => {
+        const res = item.res;
+        const pricingObj = item.pricingObj;
+        const currency = item.actualCurrency;
+        const total = item.total;
+        const discount = item.discount;
+        const paid = item.paid;
+        const bal = item.balance;
+        const status = item.computedStatus;
+        const isPastDue = item.isPastDue;
+
+        let badgeClass = 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800';
+        if (status === 'Paid in Full') badgeClass = 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+        else if (status === 'Partially Paid') badgeClass = 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+        else if (status === 'Checked Out') badgeClass = 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800';
+
+        let sourceHtml = `<span class="font-bold text-slate-700 dark:text-slate-300">${escapeHtml(res.booking_source || 'Direct Client')}</span>`;
+        if (res.booking_source === 'Travel Agency') {
+            let displayAgencyName = (res.agency_name && res.agency_name.trim() !== '') ? res.agency_name : 'Agency name not specified';
+            sourceHtml += `<span class="block text-[10px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">(${escapeHtml(displayAgencyName)})</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/50";
+        tr.setAttribute('data-checkin', res.check_in);
+        tr.setAttribute('data-status', status);
+
+        let actionBtnHtml = '';
+        if (status !== 'Cancelled' && res.status !== 'Checked Out') {
+            if (isPastDue) {
+                actionBtnHtml = `<span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 rounded font-bold text-[10px] uppercase">Expired Hold</span>`;
+            } else {
+                actionBtnHtml = `<button onclick='openPaymentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' class="bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[#046a38] dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 font-bold px-3 py-1.5 rounded-lg transition-colors text-xs"><i class="fa-solid fa-cash-register mr-1"></i> Pay</button>`;
+            }
+        }
+
+        tr.innerHTML = `
+            <td class="p-4"><span class="font-bold text-slate-900 dark:text-white">#${res.id}</span> - ${escapeHtml(res.guest_name)}<span class="block text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-wider uppercase mt-0.5">${res.guest_type || 'Resident'}</span></td>
+            <td class="p-4 text-slate-500 dark:text-slate-400">${sourceHtml}</td>
+            <td class="p-4 text-center font-medium">${res.check_in} <span class="text-slate-400 dark:text-slate-500">to</span> ${res.check_out}</td>
+            <td class="p-4 text-center font-bold">${escapeHtml(res.room_type)}<span class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">${escapeHtml(res.room_tier || 'Superior Tent')}</span><span class="block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">${res.guests_count || 1} Guests</span></td>
+            <td class="p-4 text-right font-black text-slate-900 dark:text-white">${currency} ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}${discount > 0 ? `<span class="block text-[10px] text-rose-500 dark:text-rose-400 italic mt-0.5">-${discount.toLocaleString(undefined, {minimumFractionDigits: 2})} Disc</span>` : ''}</td>
+            <td class="p-4 text-right font-bold text-emerald-600 dark:text-emerald-400">${currency} ${paid.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-4 text-right font-black text-rose-600 dark:text-rose-400">${currency} ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-4 text-center"><span class="px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider inline-block ${badgeClass}">${status}</span></td>
+            <td class="p-4 text-center whitespace-nowrap space-x-1">
+                ${actionBtnHtml}
+                <button onclick='openDocumentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold px-3 py-1.5 rounded-lg transition-colors text-xs"><i class="fa-solid fa-file-lines mr-1"></i> Docs</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    updatePaginationUI(startIndex + 1, endIndex, totalRecords);
+}
+
+function updatePaginationUI(startIdx, endIdx, total) {
+    document.getElementById('page-info').innerText = total === 0 
+        ? "Showing 0 records" 
+        : `Showing ${startIdx} to ${endIdx} of ${total} entries`;
+
+    const prevBtn = document.getElementById('prev-page-btn');
+    const nextBtn = document.getElementById('next-page-btn');
+
+    if (currentPage === 1 || total === 0 || rowsPerPage === 'all') {
+        prevBtn.disabled = true;
+    } else {
+        prevBtn.disabled = false;
+    }
+
+    const totalPages = rowsPerPage === 'all' ? 1 : Math.ceil(total / rowsPerPage);
+    if (currentPage >= totalPages || total === 0 || rowsPerPage === 'all') {
+        nextBtn.disabled = true;
+    } else {
+        nextBtn.disabled = false;
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function openPaymentModal(booking, paid, balance, pricingData, currency, finalTotal, discount) {
@@ -224,7 +273,6 @@ function openDocumentModal(booking, paid, balance, pricingData, currency, finalT
     
     document.getElementById('doc-guest-name').innerText = booking.guest_name;
     
-    // THE RECEIPT IS NOW ALWAYS UNLOCKED
     const receiptBtn = document.getElementById('btn-generate-receipt');
     if(receiptBtn) receiptBtn.style.display = 'flex';
     
@@ -253,7 +301,6 @@ function generatePDFInvoice() {
     html2pdf().set({ margin: 0.5, filename: `Invoice_Booking_${window.activeTargetBooking.id}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(element).save().then(() => { element.classList.add('hidden'); closeDocumentModal(); });
 }
 
-// SAFE RENDER FUNCTION: Prevents 'Cannot set properties of null' console crashes
 function safeSetText(id, text) {
     const el = document.getElementById(id);
     if (el) el.innerText = text;
