@@ -27,7 +27,7 @@ function loadUsers() {
                 tbody.innerHTML = '';
                 
                 if (res.data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 italic">No users found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 dark:text-slate-500 italic">No users found.</td></tr>`;
                     return;
                 }
 
@@ -35,10 +35,10 @@ function loadUsers() {
                     // Normalize the role check
                     const isSystemAdmin = (user.role.toLowerCase() === 'admin');
                     
-                    // Format role badge to match your screenshot
+                    // Format role badge for Light and Dark Modes
                     const roleBadge = isSystemAdmin 
-                        ? '<span class="px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-[10px] font-bold text-blue-600 uppercase tracking-wider">ADMIN</span>' 
-                        : '<span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">CONSULTANT</span>';
+                        ? '<span class="px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">ADMIN</span>' 
+                        : '<span class="px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">CONSULTANT</span>';
                     
                     // Display name formatting
                     const displayName = user.display_name && user.display_name.trim() !== '' 
@@ -49,19 +49,19 @@ function loadUsers() {
                     // ACTION BUTTONS RENDERING
                     // ==========================================
                     // Provide the Edit button to everyone
-                    let actionsHtml = `<button onclick='openUserModal("edit", ${JSON.stringify(user)})' class="text-blue-500 hover:text-blue-700 font-medium px-2 transition">Edit</button>`;
+                    let actionsHtml = `<button onclick='openUserModal("edit", ${JSON.stringify(user)})' class="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-2 transition-colors">Edit</button>`;
                     
                     // Hide the delete button for ID 2 (The protected core admin)
                     if (user.id == 2) {
-                        actionsHtml += '<span class="text-xs text-slate-300 italic px-2 border-l border-slate-200 ml-2">Protected</span>';
+                        actionsHtml += '<span class="text-xs text-slate-300 dark:text-slate-600 italic px-2 border-l border-slate-200 dark:border-slate-700 ml-2">Protected</span>';
                     } else {
-                        actionsHtml += `<button onclick="deleteUser(${user.id})" class="text-rose-500 hover:text-rose-700 font-medium px-2 transition border-l border-slate-200 ml-2">Delete</button>`;
+                        actionsHtml += `<button onclick="deleteUser(${user.id})" class="text-rose-500 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-medium px-2 transition-colors border-l border-slate-200 dark:border-slate-700 ml-2">Delete</button>`;
                     }
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50/50 transition">
-                            <td class="py-4 px-6 text-sm font-bold text-slate-800">${escapeHtml(displayName)}</td>
-                            <td class="py-4 px-6 text-sm text-slate-400 font-mono">${escapeHtml(user.username)}</td>
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors bg-white dark:bg-slate-800">
+                            <td class="py-4 px-6 text-sm font-bold text-slate-800 dark:text-white">${escapeHtml(displayName)}</td>
+                            <td class="py-4 px-6 text-sm text-slate-400 dark:text-slate-500 font-mono">${escapeHtml(user.username)}</td>
                             <td class="py-4 px-6">${roleBadge}</td>
                             <td class="py-4 px-6 text-right space-x-2 text-xs">
                                 ${actionsHtml}

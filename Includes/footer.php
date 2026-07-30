@@ -1,23 +1,23 @@
 <!-- Includes/footer.php -->
-<footer class="bg-white border-t border-slate-100 px-6 py-3 flex justify-between items-center shrink-0 z-10">
+<footer class="bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-6 py-4 flex flex-col sm:flex-row justify-between items-center shrink-0 z-10 gap-2 transition-colors duration-300">
     
-    <!-- Left Side: Hamburger & Copyright -->
-    <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-        <button onclick="toggleGlobalSidebar()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-[#046a38] hover:bg-emerald-50 rounded-lg transition text-sm outline-none" title="Toggle Sidebar">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-        <span class="hidden sm:inline-block">&copy; <?php echo date("Y"); ?> Rhino Tourist Camp. All rights reserved.</span>
+    <!-- Left Side: Auto-Updating Copyright -->
+    <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center sm:text-left transition-colors">
+        &copy; <span id="footer-year"></span> Rhino Tourist Camp. All rights reserved.
     </div>
     
     <!-- Right Side: Developer Credits -->
-    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-        Developed by <span class="text-[#046a38] tracking-widest">Kairi Tours and Safaris</span>
+    <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center sm:text-right transition-colors">
+        Developed by <span class="text-blue-600 dark:text-blue-400 tracking-widest font-black transition-colors">Kairi Tours & Safaris IT Department</span>
     </div>
 </footer>
 
 <!-- Global Infrastructure Scripts -->
 <script>
-    // 1. Real-Time Active Clock
+    // 1. Auto-updating Copyright Year
+    document.getElementById('footer-year').innerText = new Date().getFullYear();
+
+    // 2. Real-Time Active Clock
     function updateGlobalClock() {
         const now = new Date();
         const year = now.getFullYear();
@@ -37,11 +37,10 @@
         }
     }
     
-    // Start the clock immediately and tick every 1000ms
     updateGlobalClock();
     setInterval(updateGlobalClock, 1000);
 
-    // 2. Sidebar Collapse/Expand Logic
+    // 3. Sidebar Collapse/Expand Logic
     function toggleGlobalSidebar() {
         const sidebar = document.getElementById('global-sidebar');
         if (!sidebar) return;
@@ -50,10 +49,48 @@
         sidebar.classList.toggle('w-64');
         sidebar.classList.toggle('w-20');
         
-        // Hide/Show the text labels to prevent wrapping errors when minimized
+        // Hide/Show text labels & align icons to center
         const textElements = sidebar.querySelectorAll('.sidebar-text');
-        textElements.forEach(el => {
-            el.classList.toggle('hidden');
+        textElements.forEach(el => el.classList.toggle('hidden'));
+
+        const navLinks = sidebar.querySelectorAll('.nav-link-container');
+        navLinks.forEach(el => {
+            el.classList.toggle('px-3');
+            el.classList.toggle('justify-center');
         });
     }
+
+    // 4. Dark Mode / Light Mode Logic
+    function applyTheme() {
+        const icon = document.getElementById('theme-icon');
+        // Check local storage for preference
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            if(icon) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                icon.classList.add('text-amber-500');
+                icon.classList.remove('text-amber-400'); // Ensure hover state isn't stuck
+            }
+        } else {
+            document.documentElement.classList.remove('dark');
+            if(icon) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                icon.classList.remove('text-amber-500');
+            }
+        }
+    }
+
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            localStorage.setItem('theme', 'light');
+        } else {
+            localStorage.setItem('theme', 'dark');
+        }
+        applyTheme();
+    }
+    
+    // Apply theme immediately on load
+    applyTheme();
 </script>

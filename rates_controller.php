@@ -18,6 +18,9 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhino Tourist Camp - Rate Management Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
@@ -27,8 +30,9 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
     
     <!-- Pass PHP admin status to JavaScript securely -->
     <script> const IS_USER_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>; </script>
-    <!-- Link to external JS -->
-    <script src="js/rates_controller.js" defer></script>
+    
+    <!-- Link to external JS (Version bumped to clear cache) -->
+    <script src="js/rates_controller.js?v=2" defer></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -36,7 +40,7 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
         .pdf-matrix-table th, .pdf-matrix-table td { border: 2px solid #1e293b !important; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-[#334155] font-sans antialiased min-h-screen overflow-hidden">
+<body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
     
     <!-- FULL SCREEN WRAPPER -->
     <div class="flex h-screen w-screen overflow-hidden">
@@ -45,7 +49,7 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
         <?php include 'Includes/sidebar.php'; ?>
 
         <!-- RIGHT CONTENT AREA -->
-        <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc]">
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
             
             <!-- 2. GLOBAL HEADER -->
             <?php include 'Includes/header.php'; ?>
@@ -53,26 +57,26 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
             <!-- 3. SCROLLING MAIN CONTENT -->
             <div class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
                 
-                <div class="bg-white p-4 rounded-2xl custom-shadow border border-slate-100 flex flex-col xl:flex-row items-center justify-between gap-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-col xl:flex-row items-center justify-between gap-4 transition-colors duration-300">
                     <div>
-                        <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <i class="fa-solid fa-sliders text-[#046a38]"></i> Entry Capture Rate Console
+                        <h1 class="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-[#046a38] dark:text-emerald-500"></i> Entry Capture Rate Console
                         </h1>
-                        <p class="text-xs text-slate-400 mt-0.5">Manage and audit institutional contract rate matrices</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Manage and audit institutional contract rate matrices</p>
                     </div>
                     
                     <div class="flex items-center gap-3 flex-wrap xl:flex-nowrap">
                         
                         <?php if ($isAdmin): ?>
-                        <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shadow-inner">
-                            <button onclick="switchSystemConsoleMode('view')" id="mode-view-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
+                        <div class="bg-slate-100 dark:bg-slate-900 p-1 rounded-xl flex items-center border border-slate-200 dark:border-slate-700 shadow-inner transition-colors duration-300">
+                            <button onclick="switchSystemConsoleMode('view')" id="mode-view-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">
                                 View Mode
                             </button>
-                            <button onclick="switchSystemConsoleMode('edit')" id="mode-edit-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-600">
+                            <button onclick="switchSystemConsoleMode('edit')" id="mode-edit-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                                 Edit Mode
                             </button>
                         </div>
-                        <button onclick="openRateModal()" id="create-rate-btn" disabled class="bg-slate-200 text-slate-400 cursor-not-allowed text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
+                        <button onclick="openRateModal()" id="create-rate-btn" disabled class="bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i> Post Group Rates
                         </button>
                         <?php endif; ?>
@@ -88,42 +92,42 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                 </div>
 
                 <?php if ($isAdmin): ?>
-                <div id="console-lock-advisory" class="bg-slate-100 text-slate-500 border border-slate-200 text-center py-2.5 px-4 rounded-xl text-xs font-mono tracking-wide uppercase select-none">
+                <div id="console-lock-advisory" class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-center py-2.5 px-4 rounded-xl text-xs font-mono tracking-wide uppercase select-none transition-colors duration-300">
                     Console Locked (Switch to Edit Mode to Commit Log Matrices)
                 </div>
                 <?php endif; ?>
 
-                <div id="standard-registry-log-card" class="bg-white rounded-2xl custom-shadow border border-slate-100 overflow-hidden">
-                    <div class="p-5 bg-white border-b border-slate-100">
-                        <h3 class="text-xs font-bold tracking-wide uppercase text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-table-cells text-[#046a38]"></i> Active Rate Parameters Matrix Board
+                <div id="standard-registry-log-card" class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+                    <div class="p-5 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 transition-colors duration-300">
+                        <h3 class="text-xs font-bold tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-table-cells text-[#046a38] dark:text-emerald-500"></i> Active Rate Parameters Matrix Board
                         </h3>
                     </div>
                     
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs font-medium text-slate-600">
+                        <table class="w-full text-left border-collapse text-xs font-medium text-slate-600 dark:text-slate-300">
                             <thead>
-                                <tr class="bg-slate-50/70 text-slate-400 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100">
+                                <tr class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-700 transition-colors duration-300">
                                     <th class="p-4 pl-6">Seasons / Dates</th>
                                     <th class="p-4">Room Tier</th>
-                                    <th class="p-4 text-center bg-emerald-50/30 text-emerald-800">Single (KSh / $)</th>
-                                    <th class="p-4 text-center bg-blue-50/30 text-blue-800">Double (KSh / $)</th>
-                                    <th class="p-4 text-center bg-amber-50/30 text-amber-800">Triple (KSh / $)</th>
-                                    <th class="p-4 text-center bg-purple-50/30 text-purple-800">Family (KSh / $)</th>
+                                    <th class="p-4 text-center bg-emerald-50/30 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">Single (KSh / $)</th>
+                                    <th class="p-4 text-center bg-blue-50/30 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">Double (KSh / $)</th>
+                                    <th class="p-4 text-center bg-amber-50/30 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">Triple (KSh / $)</th>
+                                    <th class="p-4 text-center bg-purple-50/30 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">Family (KSh / $)</th>
                                     <?php if ($isAdmin): ?>
                                     <th class="p-4 text-right pr-6 log-actions-column hidden">Actions</th>
                                     <?php endif; ?>
                                 </tr>
                             </thead>
-                            <tbody id="standard-matrix-tbody" class="divide-y divide-slate-100">
+                            <tbody id="standard-matrix-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
                                 <!-- Populated dynamically -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- HIDDEN PDF DOCUMENT CANVAS -->
-                <div id="hidden-pdf-document-canvas" class="hidden bg-white p-12 space-y-6">
+                <!-- HIDDEN PDF DOCUMENT CANVAS (Strictly kept in Light Mode styling for pure PDF generation) -->
+                <div id="hidden-pdf-document-canvas" class="hidden bg-white p-12 space-y-6 text-slate-800">
                     <div class="flex flex-col items-center space-y-2 border-b-2 border-slate-800 pb-4 text-center">
                         <div class="flex items-center justify-center gap-6">
                             <div class="w-24 h-16 bg-slate-200 rounded-xl flex items-center justify-center text-slate-400 italic text-[10px] border border-slate-300">Cheetah Logo</div>
@@ -148,7 +152,7 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                     </div>
 
                     <div class="pt-2">
-                        <table class="pdf-matrix-table w-full text-center border-collapse text-xs font-bold">
+                        <table class="pdf-matrix-table w-full text-center border-collapse text-xs font-bold text-slate-800">
                             <thead>
                                 <tr class="bg-slate-50 border-b-2 border-slate-900">
                                     <th rowspan="2" class="p-2 text-left text-[10px] uppercase tracking-wider min-w-[150px]">Seasons / Dates</th>
@@ -185,20 +189,20 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
 
     <!-- DATA CAPTURE MODAL (Only renders for Admins) -->
     <?php if ($isAdmin): ?>
-    <div id="rate-modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-100 p-6 space-y-5 max-h-[95vh] overflow-y-auto relative animate-fadeIn">
-            <button onclick="closeRateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-sm z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="flex justify-between items-center border-b pb-3">
-                <h2 id="modal-terminal-title" class="text-base font-bold text-[#0f172a] flex items-center gap-2">
-                    <i class="fa-solid fa-money-check-dollar text-[#046a38]"></i> Group Rates Assignment Terminal
+    <div id="rate-modal-backdrop" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-5 max-h-[95vh] overflow-y-auto relative animate-fadeIn transition-colors duration-300">
+            <button onclick="closeRateModal()" class="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-sm z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3 transition-colors">
+                <h2 id="modal-terminal-title" class="text-base font-bold text-[#0f172a] dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-money-check-dollar text-[#046a38] dark:text-emerald-500"></i> Group Rates Assignment Terminal
                 </h2>
             </div>
 
-            <form id="rate-entry-form" onsubmit="handleRateFormSubmit(event)" class="space-y-4 text-xs font-semibold">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <form id="rate-entry-form" onsubmit="handleRateFormSubmit(event)" class="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
                     <div>
-                        <label class="block text-slate-500 mb-1">Target Season *</label>
-                        <select id="rate-season" class="w-full bg-white border border-slate-300 p-2 rounded-lg outline-none">
+                        <label class="block text-slate-500 dark:text-slate-400 mb-1">Target Season *</label>
+                        <select id="rate-season" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white p-2 rounded-lg outline-none transition-colors">
                             <option value="Festive Season">Festive Season</option>
                             <option value="High Season">High Season</option>
                             <option value="Low Season">Low Season</option>
@@ -206,44 +210,56 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-500 mb-1">Room Tier *</label>
-                        <select id="rate-room-tier" class="w-full bg-white border border-slate-300 p-2 rounded-lg outline-none">
+                        <label class="block text-slate-500 dark:text-slate-400 mb-1">Room Tier *</label>
+                        <select id="rate-room-tier" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white p-2 rounded-lg outline-none transition-colors">
                             <option value="SUPERIOR TENTS">SUPERIOR TENTS</option>
                             <option value="DELUXE ROOMS">DELUXE ROOMS</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-500 mb-1">Currency</label>
-                        <select class="w-full bg-slate-100 border border-slate-300 p-2 rounded-lg font-bold text-slate-600" disabled><option>KSh & USD</option></select>
+                        <label class="block text-slate-500 dark:text-slate-400 mb-1">Currency</label>
+                        <select class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 rounded-lg font-bold text-slate-600 dark:text-slate-500 transition-colors" disabled><option>KSh & USD</option></select>
                     </div>
                 </div>
 
                 <div class="space-y-3 pt-2">
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b pb-1">Capacity Configuration Grid</h4>
+                    <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 pb-1 transition-colors">Capacity Configuration Grid</h4>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100 space-y-2">
-                            <span class="block text-[10px] uppercase font-bold text-emerald-800">Single Room</span>
-                            <div class="grid grid-cols-2 gap-2"><input type="number" id="amt-single-ksh" placeholder="KSh" class="border border-slate-300 p-2 rounded-lg font-mono" required><input type="number" id="amt-single-usd" placeholder="USD" class="border border-slate-300 p-2 rounded-lg font-mono" required></div>
+                        <div class="p-3 bg-emerald-50/20 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400">Single Room</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="amt-single-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500 transition-colors" required>
+                                <input type="number" id="amt-single-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500 transition-colors" required>
+                            </div>
                         </div>
-                        <div class="p-3 bg-blue-50/20 rounded-xl border border-blue-100 space-y-2">
-                            <span class="block text-[10px] uppercase font-bold text-blue-800">Double Room</span>
-                            <div class="grid grid-cols-2 gap-2"><input type="number" id="amt-double-ksh" placeholder="KSh" class="border border-slate-300 p-2 rounded-lg font-mono" required><input type="number" id="amt-double-usd" placeholder="USD" class="border border-slate-300 p-2 rounded-lg font-mono" required></div>
+                        <div class="p-3 bg-blue-50/20 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-blue-800 dark:text-blue-400">Double Room</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="amt-double-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-blue-500 transition-colors" required>
+                                <input type="number" id="amt-double-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-blue-500 transition-colors" required>
+                            </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-3 bg-amber-50/20 rounded-xl border border-amber-100 space-y-2">
-                            <span class="block text-[10px] uppercase font-bold text-amber-800">Triple Room</span>
-                            <div class="grid grid-cols-2 gap-2"><input type="number" id="amt-triple-ksh" placeholder="KSh" class="border border-slate-300 p-2 rounded-lg font-mono" required><input type="number" id="amt-triple-usd" placeholder="USD" class="border border-slate-300 p-2 rounded-lg font-mono" required></div>
+                        <div class="p-3 bg-amber-50/20 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400">Triple Room</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="amt-triple-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-amber-500 transition-colors" required>
+                                <input type="number" id="amt-triple-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-amber-500 transition-colors" required>
+                            </div>
                         </div>
-                        <div class="p-3 bg-purple-50/20 rounded-xl border border-purple-100 space-y-2">
-                            <span class="block text-[10px] uppercase font-bold text-purple-800">Family Room</span>
-                            <div class="grid grid-cols-2 gap-2"><input type="number" id="amt-family-ksh" placeholder="KSh" class="border border-slate-300 p-2 rounded-lg font-mono" required><input type="number" id="amt-family-usd" placeholder="USD" class="border border-slate-300 p-2 rounded-lg font-mono" required></div>
+                        <div class="p-3 bg-purple-50/20 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-purple-800 dark:text-purple-400">Family Room</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="amt-family-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-purple-500 transition-colors" required>
+                                <input type="number" id="amt-family-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-purple-500 transition-colors" required>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeRateModal()" class="px-4 py-2 text-xs font-bold text-slate-500 border border-slate-200 rounded-xl">Cancel</button>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 transition-colors">
+                    <button type="button" onclick="closeRateModal()" class="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
                     <button type="submit" class="bg-[#046a38] hover:bg-[#03542c] text-white font-black py-2.5 px-6 rounded-xl shadow-md transition">Save Matrix</button>
                 </div>
             </form>

@@ -23,15 +23,15 @@ function fetchRatesData() {
 
 function openRateModal() {
     if (currentSystemConsoleMode === 'view') return;
-    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-money-check-dollar text-[#046a38]"></i> Post Group Rates Assignment Terminal`;
+    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-money-check-dollar text-[#046a38] dark:text-emerald-500"></i> Post Group Rates Assignment Terminal`;
     document.getElementById('rate-season').disabled = false;
     document.getElementById('rate-room-tier').disabled = false;
     document.getElementById('rate-entry-form').reset();
-    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto";
+    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto transition-colors";
 }
 
 function closeRateModal() {
-    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto";
+    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto transition-colors";
 }
 
 function switchSystemConsoleMode(targetMode) {
@@ -42,16 +42,16 @@ function switchSystemConsoleMode(targetMode) {
     const advisory = document.getElementById('console-lock-advisory');
 
     if (targetMode === 'view') {
-        viewBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
-        editBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
-        advisory.classList.remove('hidden');
+        viewBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+        editBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300";
+        if(advisory) advisory.classList.remove('hidden');
         createBtn.setAttribute('disabled', true);
-        createBtn.className = "bg-slate-200 text-slate-400 cursor-not-allowed text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2";
+        createBtn.className = "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition-colors flex items-center gap-2";
         document.querySelectorAll('.log-actions-column').forEach(el => el.classList.add('hidden'));
     } else {
-        editBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
-        viewBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-600";
-        advisory.classList.add('hidden');
+        editBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm";
+        viewBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300";
+        if(advisory) advisory.classList.add('hidden');
         createBtn.removeAttribute('disabled');
         createBtn.className = "bg-[#046a38] hover:bg-[#03542c] text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer";
         document.querySelectorAll('.log-actions-column').forEach(el => el.classList.remove('hidden'));
@@ -72,11 +72,11 @@ function renderMasterGroupedMatrixBoard() {
             if (tierKey === 'label') continue;
             const tierValues = seasonData[tierKey];
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50/40 transition border-b border-slate-100 font-medium text-slate-600 group";
+            tr.className = "hover:bg-slate-50/40 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-700/50 font-medium text-slate-600 dark:text-slate-300 group";
 
             let seasonLabelCell = '';
             if (isFirstRowForSeason) {
-                seasonLabelCell = `<td rowspan="2" class="p-4 pl-6 text-left font-bold text-slate-900 bg-slate-50/40 align-middle border-r border-slate-100 leading-snug">${seasonData.label}</td>`;
+                seasonLabelCell = `<td rowspan="2" class="p-4 pl-6 text-left font-bold text-slate-900 dark:text-white bg-slate-50/40 dark:bg-slate-900/40 align-middle border-r border-slate-100 dark:border-slate-700/50 leading-snug">${seasonData.label}</td>`;
                 isFirstRowForSeason = false;
             }
 
@@ -85,7 +85,7 @@ function renderMasterGroupedMatrixBoard() {
                 actionCellHTML = `
                     <td class="p-4 text-right pr-6 log-actions-column whitespace-nowrap">
                         <div class="inline-flex gap-3 justify-end text-sm">
-                            <button type="button" onclick="loadGroupedMatrixToPopupModal('${seasonKey}','${tierKey}')" title="Edit Rates Block" class="text-blue-500 hover:text-blue-700 transition">
+                            <button type="button" onclick="loadGroupedMatrixToPopupModal('${seasonKey}','${tierKey}')" title="Edit Rates Block" class="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>
                         </div>
@@ -96,11 +96,11 @@ function renderMasterGroupedMatrixBoard() {
 
             tr.innerHTML = `
                 ${seasonLabelCell}
-                <td class="p-4 text-left font-bold text-slate-800 bg-slate-50/10">${tierKey}</td>
-                <td class="p-4 text-center border-x border-slate-100/60 font-mono text-slate-900">KSh ${tierValues.single.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 font-normal mt-0.5">$${tierValues.single.usd}</span></td>
-                <td class="p-4 text-center border-r border-slate-100/60 font-mono text-slate-900">KSh ${tierValues.double.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 font-normal mt-0.5">$${tierValues.double.usd}</span></td>
-                <td class="p-4 text-center border-r border-slate-100/60 font-mono text-slate-900">KSh ${tierValues.triple.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 font-normal mt-0.5">$${tierValues.triple.usd}</span></td>
-                <td class="p-4 text-center border-r border-slate-100/60 font-mono text-slate-900">KSh ${tierValues.family.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 font-normal mt-0.5">$${tierValues.family.usd}</span></td>
+                <td class="p-4 text-left font-bold text-slate-800 dark:text-slate-200 bg-slate-50/10 dark:bg-slate-800/10">${tierKey}</td>
+                <td class="p-4 text-center border-x border-slate-100/60 dark:border-slate-700/50 font-mono text-slate-900 dark:text-white">KSh ${tierValues.single.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">$${tierValues.single.usd}</span></td>
+                <td class="p-4 text-center border-r border-slate-100/60 dark:border-slate-700/50 font-mono text-slate-900 dark:text-white">KSh ${tierValues.double.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">$${tierValues.double.usd}</span></td>
+                <td class="p-4 text-center border-r border-slate-100/60 dark:border-slate-700/50 font-mono text-slate-900 dark:text-white">KSh ${tierValues.triple.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">$${tierValues.triple.usd}</span></td>
+                <td class="p-4 text-center border-r border-slate-100/60 dark:border-slate-700/50 font-mono text-slate-900 dark:text-white">KSh ${tierValues.family.ksh.toLocaleString()}<span class="block text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">$${tierValues.family.usd}</span></td>
                 ${actionCellHTML}
             `;
             tbody.appendChild(tr);
@@ -109,7 +109,7 @@ function renderMasterGroupedMatrixBoard() {
 }
 
 function loadGroupedMatrixToPopupModal(season, tier) {
-    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> Edit Rates Matrix: ${season} (${tier})`;
+    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600 dark:text-blue-400"></i> Edit Rates Matrix: ${season} (${tier})`;
     
     const seasonSelect = document.getElementById('rate-season');
     const tierSelect = document.getElementById('rate-room-tier');
@@ -127,7 +127,7 @@ function loadGroupedMatrixToPopupModal(season, tier) {
     document.getElementById('amt-family-ksh').value = targetSourceNode.family.ksh;
     document.getElementById('amt-family-usd').value = targetSourceNode.family.usd;
 
-    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto";
+    document.getElementById('rate-modal-backdrop').className = "fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto transition-colors";
 }
 
 function handleRateFormSubmit(e) {
@@ -174,6 +174,8 @@ function populatePDFMatrixTbody() {
             if (tierKey === 'label') continue;
             const tierValues = seasonData[tierKey];
             const tr = document.createElement('tr');
+            
+            // NOTE: No dark mode classes here so the PDF generates perfectly in light mode
             tr.className = "text-slate-900 font-bold border-b-2 border-slate-900";
 
             let seasonLabelCell = '';
