@@ -184,3 +184,20 @@ $$
 DELIMITER ;
 
 COMMIT;
+
+CREATE TABLE IF NOT EXISTS `system_settings` (
+  `setting_key` VARCHAR(50) NOT NULL,
+  `setting_value` TEXT DEFAULT NULL,
+  PRIMARY KEY (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Insert default white-label configurations if empty
+INSERT IGNORE INTO `system_settings` (`setting_key`, `setting_value`) VALUES
+('header_title', 'RHINO TOURIST RESERVATION SYSTEM'),
+('header_subtitle', 'Rhino Tourist Camp Front-Desk Operations Ledger Console'),
+('header_icon', 'fa-hippo'),
+('sidebar_title', 'Rhino Camp'),
+('sidebar_subtitle', 'Reservation Suite'),
+('sidebar_icon', 'fa-campground'),
+('footer_text', '© 2026 RHINO TOURIST CAMP. ALL RIGHTS RESERVED.'),
+('theme_color', 'emerald');

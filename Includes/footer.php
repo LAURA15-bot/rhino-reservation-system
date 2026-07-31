@@ -1,23 +1,27 @@
+<?php
+// Load dynamic settings if not already loaded
+if (!isset($GLOBALS['system_settings'])) {
+    require_once __DIR__ . '/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+?>
 <!-- Includes/footer.php -->
 <footer class="bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-6 py-4 flex flex-col sm:flex-row justify-between items-center shrink-0 z-10 gap-2 transition-colors duration-300">
     
-    <!-- Left Side: Auto-Updating Copyright -->
+    <!-- Left Side: Dynamic Copyright -->
     <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center sm:text-left transition-colors">
-        &copy; <span id="footer-year"></span> Rhino Tourist Camp. All rights reserved.
+        <span id="footer-copyright-text"><?php echo htmlspecialchars($set['footer_text']); ?></span>
     </div>
     
     <!-- Right Side: Developer Credits -->
     <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center sm:text-right transition-colors">
-        Developed by <span class="text-blue-600 dark:text-blue-400 tracking-widest font-black transition-colors">Kairi Tours & Safaris IT Department</span>
+        Developed by <span class="text-[#046a38] dark:text-emerald-400 tracking-widest font-black transition-colors">Kairi Tours & Safaris IT Department</span>
     </div>
 </footer>
 
 <!-- Global Infrastructure Scripts -->
 <script>
-    // 1. Auto-updating Copyright Year
-    document.getElementById('footer-year').innerText = new Date().getFullYear();
-
-    // 2. Real-Time Active Clock
+    // Real-Time Active Clock
     function updateGlobalClock() {
         const now = new Date();
         const year = now.getFullYear();
@@ -40,16 +44,14 @@
     updateGlobalClock();
     setInterval(updateGlobalClock, 1000);
 
-    // 3. Sidebar Collapse/Expand Logic
+    // Sidebar Collapse/Expand Logic
     function toggleGlobalSidebar() {
         const sidebar = document.getElementById('global-sidebar');
         if (!sidebar) return;
         
-        // Toggle the width of the sidebar (64 = expanded, 20 = minimized icons only)
         sidebar.classList.toggle('w-64');
         sidebar.classList.toggle('w-20');
         
-        // Hide/Show text labels & align icons to center
         const textElements = sidebar.querySelectorAll('.sidebar-text');
         textElements.forEach(el => el.classList.toggle('hidden'));
 
@@ -60,17 +62,16 @@
         });
     }
 
-    // 4. Dark Mode / Light Mode Logic
+    // Dark Mode / Light Mode Logic
     function applyTheme() {
         const icon = document.getElementById('theme-icon');
-        // Check local storage for preference
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
             if(icon) {
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
                 icon.classList.add('text-amber-500');
-                icon.classList.remove('text-amber-400'); // Ensure hover state isn't stuck
+                icon.classList.remove('text-amber-400');
             }
         } else {
             document.documentElement.classList.remove('dark');
@@ -91,6 +92,9 @@
         applyTheme();
     }
     
-    // Apply theme immediately on load
     applyTheme();
 </script>
+
+<!-- Client-Side Session Inactivity Monitor -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="js/session_timeout.js" defer></script>

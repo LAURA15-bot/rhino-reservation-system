@@ -40,4 +40,7 @@ try {
     ]);
     exit;
 }
+
+// 6. Enforce Secure Session Inactivity Checks Globally
+require_once __DIR__ . '/session_check.php';
 ?>
