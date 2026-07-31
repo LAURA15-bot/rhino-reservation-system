@@ -2,6 +2,26 @@
 session_start();
 require 'Includes/database.php';
 
+// 1. LOAD SYSTEM SETTINGS
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+// 2. EXTRACT ACTIVE BRANDING & THEME
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
+
+$displayType = $set['sidebar_display_type'] ?? 'icon';
+$logoPath = $set['logo_path'] ?? '';
+$title = $set['sidebar_title'] ?? 'Rhino Camp';
+$subtitle = $set['sidebar_subtitle'] ?? 'Reservation Suite';
+$icon = $set['sidebar_icon'] ?? 'fa-campground';
+
 $error = '';
 
 // Check if redirected due to session inactivity timeout
@@ -9,6 +29,7 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == 1) {
     $error = "Your session expired due to inactivity. Please log in again.";
 }
 
+// 3. AUTHENTICATION LOGIC
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = $_POST['username'];
     $pass = $_POST['password'];
@@ -49,22 +70,70 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Rhino System</title>
+    <title>Login - <?php echo htmlspecialchars($title); ?></title>
     <!-- Tailwind CSS and FontAwesome for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Dynamic Theme Integration */
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+            --theme-color-focus: <?php echo $primaryColor; ?>33; /* 20% Opacity for the focus ring */
+        }
+        
+        .custom-focus:focus {
+            border-color: var(--theme-color) !important;
+            box-shadow: 0 0 0 4px var(--theme-color-focus) !important;
+        }
+        
+        .theme-btn {
+            background-color: var(--theme-color);
+            transition: filter 0.2s ease-in-out, transform 0.1s ease;
+        }
+        
+        .theme-btn:hover {
+            filter: brightness(85%);
+            transform: translateY(-1px);
+        }
+        
+        .theme-text {
+            color: var(--theme-color);
+            transition: filter 0.2s ease;
+        }
+        
+        .theme-text:hover {
+            filter: brightness(70%);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 flex items-center justify-center min-h-screen font-sans">
+<body class="bg-slate-50 flex items-center justify-center min-h-screen font-sans selection:bg-[var(--theme-color)] selection:text-white">
     
     <div class="w-full max-w-md p-8 bg-white rounded-3xl shadow-xl border border-slate-100 mx-4">
         
-        <!-- Logo & Branding -->
-        <div class="text-center mb-8 space-y-2">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-[#046a38] text-white rounded-2xl shadow-md mb-2">
-                <i class="fa-solid fa-campground text-3xl"></i>
-            </div>
-            <h1 class="text-2xl font-black tracking-wider uppercase text-slate-900">Rhino Camp</h1>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Reservation Suite</p>
+        <!-- Dynamic Logo & Branding -->
+        <div class="text-center mb-8 space-y-2 flex flex-col items-center">
+            
+            <?php if ($displayType === 'logo' && !empty($logoPath)): ?>
+                <!-- Render Custom Image Logo -->
+                <div class="inline-flex items-center justify-center w-40 h-24 mb-2 transition-all">
+                    <img src="<?php echo htmlspecialchars($logoPath); ?>" alt="System Logo" class="max-w-full max-h-full object-contain drop-shadow-sm">
+                </div>
+            <?php else: ?>
+                <!-- Render Dynamic FontAwesome Icon -->
+                <div class="inline-flex items-center justify-center w-16 h-16 text-white rounded-2xl shadow-md mb-2 theme-btn">
+                    <i class="fa-solid <?php echo htmlspecialchars($icon); ?> text-3xl"></i>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($title)): ?>
+                <h1 class="text-2xl font-black tracking-wider uppercase text-slate-900"><?php echo htmlspecialchars($title); ?></h1>
+            <?php endif; ?>
+            
+            <?php if (!empty($subtitle)): ?>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest"><?php echo htmlspecialchars($subtitle); ?></p>
+            <?php endif; ?>
+            
         </div>
 
         <!-- Error Message Alert -->
@@ -83,7 +152,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <input type="text" name="username" required 
-                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#046a38] focus:border-[#046a38] block pl-10 p-3 outline-none transition" 
+                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl block pl-10 p-3 outline-none transition custom-focus" 
                         placeholder="Enter your username">
                 </div>
             </div>
@@ -95,20 +164,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="fa-solid fa-lock"></i>
                     </div>
                     <input type="password" name="password" id="passwordInput" required 
-                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#046a38] focus:border-[#046a38] block pl-10 p-3 outline-none transition" 
+                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl block pl-10 p-3 outline-none transition custom-focus" 
                         placeholder="••••••••">
                 </div>
                 
                 <div class="flex items-center justify-between mt-3 px-1">
                     <label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" onclick="togglePassword()" class="w-4 h-4 text-[#046a38] bg-slate-100 border-slate-300 rounded focus:ring-[#046a38] cursor-pointer">
+                        <input type="checkbox" onclick="togglePassword()" class="w-4 h-4 bg-slate-100 border-slate-300 rounded cursor-pointer transition-colors" style="accent-color: var(--theme-color);">
                         <span class="text-xs font-bold text-slate-500 group-hover:text-slate-700 transition">Show Password</span>
                     </label>
-                    <a href="forgot_password.php" class="text-xs font-bold text-[#046a38] hover:text-[#03542c] hover:underline transition">Forgot Password?</a>
+                    <a href="forgot_password.php" class="text-xs font-bold hover:underline transition theme-text">Forgot Password?</a>
                 </div>
             </div>
             
-            <button type="submit" class="w-full bg-[#046a38] hover:bg-[#03542c] text-white font-bold py-3.5 px-5 rounded-xl text-sm transition shadow-md hover:shadow-lg flex justify-center items-center gap-2 mt-4">
+            <button type="submit" class="w-full theme-btn text-white font-bold py-3.5 px-5 rounded-xl text-sm transition shadow-md flex justify-center items-center gap-2 mt-4">
                 Secure Login <i class="fa-solid fa-arrow-right-to-bracket"></i>
             </button>
         </form>

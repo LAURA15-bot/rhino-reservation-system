@@ -7,6 +7,20 @@ if (!isset($_SESSION['logged_in'])) {
     exit;
 }
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// 1. LOAD SYSTEM SETTINGS
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+// 2. EXTRACT ACTIVE THEME
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,16 +34,20 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Bumping version to v=5 to clear browser cache and load the new cleaner layout -->
-    <script src="js/calendar.js?v=5" defer></script>
+    <!-- Bumping version to clear browser cache and load the new Theme logic -->
+    <script src="js/calendar.js?v=6" defer></script>
 
     <style>
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+        }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        .theme-text { color: var(--theme-color); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
+<body data-primary-color="<?php echo $primaryColor; ?>" class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
 
     <!-- FULL SCREEN WRAPPER -->
     <div class="flex h-screen w-screen overflow-hidden">
@@ -69,7 +87,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </div>
 
                     <div class="bg-white dark:bg-slate-800 p-1.5 rounded-xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-wrap gap-1 transition-colors duration-300">
-                        <button onclick="switchCalendarViewTab('all')" id="tab-all" class="flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all bg-[#046a38] text-white">
+                        <!-- Default Active Tab utilizes the inline style to fetch the PHP primary theme color immediately -->
+                        <button onclick="switchCalendarViewTab('all')" id="tab-all" class="flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all text-white shadow-sm" style="background-color: <?php echo $primaryColor; ?>;">
                             <i class="fa-solid fa-grid-2 mr-1"></i> Overview Summary
                         </button>
                         <button onclick="switchCalendarViewTab('single')" id="tab-single" class="flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Single Rooms</button>
@@ -88,7 +107,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             </div>
 
-            <!-- Permanent Legend Docked Above Footer (Updated to vibrant colors) -->
+            <!-- Permanent Semantic Legend -->
             <div class="shrink-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 p-3 flex flex-wrap items-center justify-center gap-6 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider transition-colors duration-300">
                 <div class="flex items-center gap-2"><span class="w-4 h-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded shadow-inner inline-block"></span> 0% (Available / Empty)</div>
                 <div class="flex items-center gap-2"><span class="w-4 h-4 bg-emerald-200 dark:bg-emerald-900/80 border border-emerald-400 dark:border-emerald-600 rounded shadow-inner inline-block"></span> 1% - 75% (Available)</div>
@@ -112,11 +131,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <!-- HEADER & NEW INJECTED SUMMARY -->
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Camp Manifest: <span id="manifest-date-title" class="text-[#046a38] dark:text-emerald-500"></span></h2>
+                        <!-- Uses theme-text class -->
+                        <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Camp Manifest: <span id="manifest-date-title" class="theme-text"></span></h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Comprehensive audit trail of rooms and active personnel metrics for this day</p>
                     </div>
                     
-                    <!-- JS INJECTS THE ROOM SUMMARY RECORD HERE -->
                     <div id="manifest-room-summary" class="hidden md:block"></div>
                 </div>
                 

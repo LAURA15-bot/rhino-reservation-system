@@ -7,12 +7,14 @@ let CAMP_INVENTORY_METRICS = {};
 let reservationsDatabase = [];
 let activeSelectedSourceMode = 'direct';
 
+// Fetch the dynamically injected PHP theme color for JS manipulation
+const primaryThemeColor = document.body.dataset.primaryColor || '#046a38';
+
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     let targetDate = urlParams.get('date') || SERVER_TODAY;
     document.getElementById('global-manifest-datepicker').value = targetDate;
     
-    // Set initial placeholder based on default select value
     updateSearchPlaceholder();
     loadDashboardData(targetDate);
     
@@ -26,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 15000);
 });
 
-// Automatically update the search bar's placeholder text when the dropdown changes
 function updateSearchPlaceholder() {
     const cat = document.getElementById('filter-category-select').value;
     const input = document.getElementById('filter-search-value');
@@ -40,8 +41,6 @@ function updateSearchPlaceholder() {
     } else {
         input.placeholder = "Search by Client Name, Travel Agency, or Booking Officer...";
     }
-    
-    // Auto-trigger the search so the table updates instantly if there's already text inside
     applyLedgerLiveSearchFilters();
 }
 
@@ -164,14 +163,16 @@ function submitPaymentViaAjax(e) {
 function openReservationModal(editId = null) {
     document.getElementById('dynamic-allocation-rows-container').innerHTML = '';
     
-    // Reset Agency Input validation styles if previously red
     const agName = document.getElementById('input-agency-name');
     const bkOff = document.getElementById('input-booking-officer');
-    agName.className = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300";
-    bkOff.className = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300";
+    agName.className = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2 text-xs outline-none focus:ring-2 transition-colors duration-300";
+    bkOff.className = "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2 text-xs outline-none focus:ring-2 transition-colors duration-300";
+    
+    agName.style.setProperty('--tw-ring-color', primaryThemeColor);
+    bkOff.style.setProperty('--tw-ring-color', primaryThemeColor);
 
     if (editId) {
-        document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-[#046a38] dark:text-emerald-500"></i> Edit Reservation Terminal`;
+        document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-pen-to-square theme-text"></i> Edit Reservation Terminal`;
         document.getElementById('editing-target-reservation-id').value = editId;
         
         let res = reservationsDatabase.find(r => r.id === String(editId));
@@ -206,7 +207,7 @@ function openReservationModal(editId = null) {
             });
         }
     } else {
-        document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-calendar-plus text-[#046a38] dark:text-emerald-500"></i> New Reservation Terminal`;
+        document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-calendar-plus theme-text"></i> New Reservation Terminal`;
         document.getElementById('editing-target-reservation-id').value = "";
         document.getElementById('input-agency-name').value = '';
         document.getElementById('input-booking-officer').value = '';
@@ -233,20 +234,35 @@ function setBookingSource(mode) {
     const agName = document.getElementById('input-agency-name');
     const bkOff = document.getElementById('input-booking-officer');
 
+    const activeClass = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm";
+    const inactiveClass = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
+
     if(mode === 'direct') {
-        directBtn.className = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all border-[#046a38] dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/30 text-[#046a38] dark:text-emerald-400";
-        agencyBtn.className = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
-        wrapper.classList.add('hidden'); wrapper.classList.remove('grid');
+        directBtn.className = activeClass;
+        directBtn.style.borderColor = primaryThemeColor;
+        directBtn.style.color = primaryThemeColor;
+        directBtn.style.backgroundColor = primaryThemeColor + "1A";
         
-        // Remove requirement to fill if switching to Direct Client
+        agencyBtn.className = inactiveClass;
+        agencyBtn.style.borderColor = "";
+        agencyBtn.style.color = "";
+        agencyBtn.style.backgroundColor = "";
+        
+        wrapper.classList.add('hidden'); wrapper.classList.remove('grid');
         agName.removeAttribute('required');
         bkOff.removeAttribute('required');
     } else {
-        agencyBtn.className = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all border-[#046a38] dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/30 text-[#046a38] dark:text-emerald-400";
-        directBtn.className = "py-2.5 px-4 rounded-xl border-2 font-semibold text-xs flex items-center justify-center gap-2 transition-all border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800";
-        wrapper.classList.remove('hidden'); wrapper.classList.add('grid');
+        agencyBtn.className = activeClass;
+        agencyBtn.style.borderColor = primaryThemeColor;
+        agencyBtn.style.color = primaryThemeColor;
+        agencyBtn.style.backgroundColor = primaryThemeColor + "1A";
+
+        directBtn.className = inactiveClass;
+        directBtn.style.borderColor = "";
+        directBtn.style.color = "";
+        directBtn.style.backgroundColor = "";
         
-        // Make Agency Fields Required
+        wrapper.classList.remove('hidden'); wrapper.classList.add('grid');
         agName.setAttribute('required', 'required');
         bkOff.setAttribute('required', 'required');
     }
@@ -263,7 +279,6 @@ window.toggleSpecialReq = function(checkbox, rowId) {
         input.removeAttribute('required');
         input.value = ''; 
         
-        // Strip out red/green visual validation classes if unchecked
         input.classList.remove('border-rose-500', 'dark:border-rose-500', 'focus:ring-rose-500', 'ring-1', 'ring-rose-500', 'border-emerald-500', 'dark:border-emerald-500', 'focus:ring-emerald-500', 'ring-emerald-500');
         input.classList.add('border-amber-300', 'dark:border-amber-700', 'focus:ring-amber-500');
     }
@@ -289,7 +304,7 @@ function addNewAllocationRowRow(data = null) {
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <div class="sm:col-span-12">
                 <label class="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-0.5">Guest Name *</label>
-                <input type="text" placeholder="e.g. John Doe" class="alloc-client-names w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-1.5 text-xs outline-none text-slate-900 dark:text-white focus:border-emerald-500" value="${data ? data.clientNames : ''}" required>
+                <input type="text" placeholder="e.g. John Doe" class="alloc-client-names w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-1.5 text-xs outline-none text-slate-900 dark:text-white focus:ring-2 focus:border-transparent transition-all" style="--tw-ring-color: ${primaryThemeColor};" value="${data ? data.clientNames : ''}" required>
             </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
@@ -344,7 +359,8 @@ function addNewAllocationRowRow(data = null) {
             
             <div class="flex items-end pb-1.5 gap-4">
                 <label class="flex items-center gap-1.5 cursor-pointer pl-1">
-                    <input type="checkbox" class="alloc-under-12 w-3 h-3 text-emerald-600 bg-slate-50 dark:bg-slate-800 rounded border-slate-300 dark:border-slate-600 focus:ring-emerald-500" ${(!data || data.under12) ? 'checked' : ''}>
+                    <!-- Checkbox takes dynamic color via inline accent-color style -->
+                    <input type="checkbox" class="alloc-under-12 w-3 h-3 bg-slate-50 dark:bg-slate-800 rounded border-slate-300 dark:border-slate-600" style="accent-color: ${primaryThemeColor};" ${(!data || data.under12) ? 'checked' : ''}>
                     <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase">Under 12 Yrs?</span>
                 </label>
                 <label class="flex items-center gap-1.5 cursor-pointer">
@@ -367,22 +383,16 @@ function deleteAllocationRowNode(id) {
     if(rows.length > 1) document.getElementById(id).remove();
 }
 
-// ==========================================
-// VISUAL VALIDATION ENGINE (RED/GREEN BORDERS)
-// ==========================================
 function validateField(el) {
     if (!el || !el.hasAttribute('required')) return true;
     const val = el.value.trim();
     
-    // Base style classes to clear when manipulating borders
     const neutralBorders = ['border-slate-200', 'dark:border-slate-600', 'border-slate-300', 'border-amber-300', 'dark:border-amber-700', 'dark:border-slate-700'];
     
     if (val === '') {
-        // Apply Red Error State
         el.classList.remove(...neutralBorders, 'border-emerald-500', 'dark:border-emerald-500', 'focus:ring-emerald-500', 'focus:ring-amber-500');
         el.classList.add('border-rose-500', 'dark:border-rose-500', 'focus:ring-rose-500', 'ring-1', 'ring-rose-500');
         
-        // Add Live Self-Healing Listener
         el.addEventListener('input', function heal() {
             if(this.value.trim() !== '') {
                 this.classList.remove('border-rose-500', 'dark:border-rose-500', 'focus:ring-rose-500', 'ring-rose-500');
@@ -394,7 +404,6 @@ function validateField(el) {
         });
         return false;
     } else {
-        // Apply Green Success State
         el.classList.remove(...neutralBorders, 'border-rose-500', 'dark:border-rose-500', 'focus:ring-rose-500', 'ring-rose-500', 'focus:ring-amber-500');
         el.classList.add('border-emerald-500', 'dark:border-emerald-500', 'focus:ring-emerald-500', 'ring-1', 'ring-emerald-500');
         return true;
@@ -412,20 +421,17 @@ function processAndValidateFormSubmission() {
     const todayDate = new Date(SERVER_TODAY);
     const editId = document.getElementById('editing-target-reservation-id').value;
 
-    // 1. Run validation on top-level Agency fields if applicable
     if (activeSelectedSourceMode === 'agency') {
         if (!validateField(document.getElementById('input-agency-name'))) isValid = false;
         if (!validateField(document.getElementById('input-booking-officer'))) isValid = false;
     }
 
     nodes.forEach((node, index) => {
-        // 2. Loop through every required input in this specific line item to trigger visual red/green borders
         const reqInputs = node.querySelectorAll('input[required], select[required], textarea[required]');
         reqInputs.forEach(inp => {
             if (!validateField(inp)) isValid = false;
         });
 
-        // 3. Extract Values
         const clientNames = node.querySelector('.alloc-client-names').value.trim();
         const guestType = node.querySelector('.alloc-guest-type').value;
         const roomTier = node.querySelector('.alloc-room-tier').value;
@@ -442,12 +448,10 @@ function processAndValidateFormSubmission() {
         const hasRequests = node.querySelector('.alloc-has-requests').checked;
         const specialRequests = hasRequests ? node.querySelector('.alloc-special-requests').value.trim() : '';
         
-        // Logical Check: Date in past
         if (!editId && new Date(checkIn) < todayDate) {
             Swal.fire({ icon: 'error', title: 'Invalid Check-in Date', text: 'You cannot book a room for a date in the past.' });
             isValid = false;
             
-            // Force the date input red explicitly
             const dateInp = node.querySelector('.alloc-checkin-date');
             dateInp.classList.remove('border-slate-200', 'dark:border-slate-600', 'border-emerald-500');
             dateInp.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
@@ -561,7 +565,6 @@ function syncSelectedManifestToDate(targetDateStr) {
                 if (isCheckoutNight) totalCheckoutsTodayCalculated += alloc.guestsCount;
                 let matchesOmni = false;
                 
-                // EXACT FILTERING LOGIC
                 if (searchVal === "") matchesOmni = true;
                 else if (selectedCategory === "all") matchesOmni = res.agentName.toLowerCase().includes(searchVal) || alloc.clientNames.toLowerCase().includes(searchVal) || res.bookingOfficer.toLowerCase().includes(searchVal);
                 else if (selectedCategory === "pipeline") matchesOmni = res.agentName.toLowerCase().includes(searchVal);

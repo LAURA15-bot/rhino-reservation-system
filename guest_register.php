@@ -7,6 +7,20 @@ if (!isset($_SESSION['logged_in'])) {
     exit;
 }
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// 1. LOAD SYSTEM SETTINGS
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+// 2. EXTRACT ACTIVE THEME
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,34 +34,33 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Version bumped to clear browser cache and load pagination logic -->
-    <script src="js/guest_register.js?v=4" defer></script>
+    <script src="js/guest_register.js?v=5" defer></script>
     
     <style>
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+            --theme-color-focus: <?php echo $primaryColor; ?>33;
+        }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        .theme-text { color: var(--theme-color); }
+        .theme-focus:focus { outline: none; border-color: var(--theme-color); box-shadow: 0 0 0 3px var(--theme-color-focus); }
     </style>
 </head>
 <body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
 
-    <!-- FULL SCREEN WRAPPER -->
     <div class="flex h-screen w-screen overflow-hidden">
         
-        <!-- 1. LEFT SIDEBAR -->
         <?php include 'Includes/sidebar.php'; ?>
 
-        <!-- RIGHT CONTENT AREA -->
-        <!-- Y-AXIS SCROLL MOVED HERE TO LET THE ENTIRE PAGE SCROLL -->
         <main class="flex-1 overflow-y-auto h-full bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300 flex flex-col">
             
-            <!-- 2. GLOBAL HEADER -->
             <?php include 'Includes/header.php'; ?>
 
-            <!-- 3. SCROLLING MAIN CONTENT CONTAINER -->
             <div class="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto w-full flex-1">
                 
                 <!-- Premium Section Header -->
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex items-center gap-3 transition-colors duration-300">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center shadow-inner shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900/50 theme-text flex items-center justify-center shadow-inner shrink-0 border border-slate-200 dark:border-slate-700">
                         <i class="fa-solid fa-address-book text-lg"></i>
                     </div>
                     <div>
@@ -63,7 +76,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <!-- Per Page Filter -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Per Page</label>
-                            <select id="rowsPerPageFilter" onchange="changeRowsPerPage()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-24 p-2.5 cursor-pointer outline-none transition-colors duration-300">
+                            <select id="rowsPerPageFilter" onchange="changeRowsPerPage()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-24 p-2.5 cursor-pointer transition-colors duration-300">
                                 <option value="10">10</option>
                                 <option value="20">20</option>
                                 <option value="50">50</option>
@@ -74,7 +87,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <!-- Date Filter -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Timeframe</label>
-                            <select id="dateFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-48 p-2.5 cursor-pointer outline-none transition-colors duration-300" onchange="toggleCustomDates(); filterTable();">
+                            <select id="dateFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-48 p-2.5 cursor-pointer transition-colors duration-300" onchange="toggleCustomDates(); filterTable();">
                                 <option value="all">All Available History</option>
                                 <option value="today">Today</option>
                                 <option value="7">Past 7 Days</option>
@@ -86,11 +99,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div id="customDateWrapper" class="hidden flex items-end gap-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
-                                <input type="date" id="startDate" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-300" onchange="filterTable();">
+                                <input type="date" id="startDate" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 theme-focus transition-colors duration-300" onchange="filterTable();">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">End Date</label>
-                                <input type="date" id="endDate" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-300" onchange="filterTable();">
+                                <input type="date" id="endDate" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 theme-focus transition-colors duration-300" onchange="filterTable();">
                             </div>
                         </div>
                     </div>
@@ -98,7 +111,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <!-- Status Filter -->
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Registration Status</label>
-                        <select id="statusFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-48 p-2.5 cursor-pointer outline-none transition-colors duration-300" onchange="filterTable();">
+                        <select id="statusFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-48 p-2.5 cursor-pointer transition-colors duration-300" onchange="filterTable();">
                             <option value="All Statuses">All Statuses</option>
                             <option value="Fully Paid">Fully Paid (Confirmed)</option>
                             <option value="Partially Paid">Partially Paid</option>
@@ -109,7 +122,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </div>
                 </div>
 
-                <!-- Data Table Card (H-Auto so it hugs the rows perfectly) -->
+                <!-- Data Table Card -->
                 <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300 h-auto">
                     <div class="overflow-x-auto w-full">
                         <table class="w-full text-left border-collapse" id="guestTable">
@@ -146,7 +159,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             </div>
 
-            <!-- 4. GLOBAL FOOTER -->
             <?php include 'Includes/footer.php'; ?>
 
         </main>
