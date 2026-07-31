@@ -4,6 +4,11 @@ require 'Includes/database.php';
 
 $error = '';
 
+// Check if redirected due to session inactivity timeout
+if (isset($_GET['timeout']) && $_GET['timeout'] == 1) {
+    $error = "Your session expired due to inactivity. Please log in again.";
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = $_POST['username'];
     $pass = $_POST['password'];
@@ -17,6 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['logged_in'] = true;
         $_SESSION['username'] = $user_data['username'];
         $_SESSION['role'] = $user_data['role'] ?? 'Consultant'; 
+        $_SESSION['last_activity'] = time(); // Initialize inactivity timestamp
 
         // SUCCESSFUL LOGIN AUDIT LOG
         try {
