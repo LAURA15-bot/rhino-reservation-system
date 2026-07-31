@@ -7,9 +7,19 @@ if (!isset($_SESSION['logged_in'])) {
     exit;
 }
 $current_page = basename($_SERVER['PHP_SELF']);
-
-// Check if current user is an Admin
 $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin');
+
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,55 +28,43 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhino Tourist Camp - Rate Management Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class', }
-    </script>
+    <script> tailwind.config = { darkMode: 'class', } </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <!-- ExcelJS & FileSaver for visually styled Excel exports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-    <!-- Pass PHP admin status to JavaScript securely -->
     <script> const IS_USER_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>; </script>
-    
-    <!-- Link to external JS (Version bumped to clear cache) -->
-    <script src="js/rates_controller.js?v=2" defer></script>
-    
+    <script src="js/rates_controller.js?v=3" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
+        :root { --theme-color: <?php echo $primaryColor; ?>; }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
-        .pdf-matrix-table th, .pdf-matrix-table td { border: 2px solid #1e293b !important; }
+        .theme-btn { background-color: var(--theme-color); transition: filter 0.2s; }
+        .theme-btn:hover { filter: brightness(85%); }
+        .theme-text { color: var(--theme-color); }
     </style>
 </head>
 <body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
     
-    <!-- FULL SCREEN WRAPPER -->
     <div class="flex h-screen w-screen overflow-hidden">
-        
-        <!-- 1. LEFT SIDEBAR -->
         <?php include 'Includes/sidebar.php'; ?>
 
-        <!-- RIGHT CONTENT AREA -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
-            
-            <!-- 2. GLOBAL HEADER -->
             <?php include 'Includes/header.php'; ?>
 
-            <!-- 3. SCROLLING MAIN CONTENT -->
             <div class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
                 
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-col xl:flex-row items-center justify-between gap-4 transition-colors duration-300">
                     <div>
                         <h1 class="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                            <i class="fa-solid fa-sliders text-[#046a38] dark:text-emerald-500"></i> Entry Capture Rate Console
+                            <i class="fa-solid fa-sliders theme-text"></i> Entry Capture Rate Console
                         </h1>
                         <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Manage and audit institutional contract rate matrices</p>
                     </div>
                     
                     <div class="flex items-center gap-3 flex-wrap xl:flex-nowrap">
-                        
                         <?php if ($isAdmin): ?>
                         <div class="bg-slate-100 dark:bg-slate-900 p-1 rounded-xl flex items-center border border-slate-200 dark:border-slate-700 shadow-inner transition-colors duration-300">
                             <button onclick="switchSystemConsoleMode('view')" id="mode-view-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm">
@@ -100,7 +98,7 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                 <div id="standard-registry-log-card" class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
                     <div class="p-5 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 transition-colors duration-300">
                         <h3 class="text-xs font-bold tracking-wide uppercase text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                            <i class="fa-solid fa-table-cells text-[#046a38] dark:text-emerald-500"></i> Active Rate Parameters Matrix Board
+                            <i class="fa-solid fa-table-cells theme-text"></i> Active Rate Parameters Matrix Board
                         </h3>
                     </div>
                     
@@ -126,75 +124,61 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                     </div>
                 </div>
 
-                <!-- HIDDEN PDF DOCUMENT CANVAS (Strictly kept in Light Mode styling for pure PDF generation) -->
-                <div id="hidden-pdf-document-canvas" class="hidden bg-white p-12 space-y-6 text-slate-800">
-                    <div class="flex flex-col items-center space-y-2 border-b-2 border-slate-800 pb-4 text-center">
-                        <div class="flex items-center justify-center gap-6">
-                            <div class="w-24 h-16 bg-slate-200 rounded-xl flex items-center justify-center text-slate-400 italic text-[10px] border border-slate-300">Cheetah Logo</div>
-                            <div>
-                                <h1 class="text-3xl font-serif font-black tracking-wide text-amber-800 uppercase leading-none">Rhino Tourist Camp</h1>
-                                <h2 class="text-2xl font-serif font-bold text-emerald-800 italic tracking-wider mt-1">Masai Mara</h2>
-                            </div>
+                <!-- HIDDEN PDF DOCUMENT CANVAS (Matches Image 3 Output) -->
+                <div id="hidden-pdf-document-canvas" class="hidden bg-white p-8 text-slate-800">
+                    
+                    <!-- Dynamic PDF Header Upload -->
+                    <?php if (!empty($set['rack_rates_header_path'])): ?>
+                        <div class="w-full text-center mb-6">
+                            <img src="<?php echo htmlspecialchars($set['rack_rates_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-40">
                         </div>
-                        <p class="text-[10px] font-mono font-bold text-slate-700 tracking-tight leading-relaxed max-w-3xl pt-2">
-                            www.rhinotouristcamp.com email: info@rhinotouristcamp.com Mobile (+254) 0700355555 / 0722518843 / 0727827007. Landline: (+254) 202385334
-                        </p>
-                        <p class="text-[11px] font-black text-center tracking-wide text-slate-900 uppercase pt-3">
-                            RESIDENT AND NON-RESIDENT <span class="underline underline-offset-4">CONTRACT RATES</span> VALID FROM 21ST Dec 2025 to 20th Dec 2026
-                        </p>
-                        <div class="w-full grid grid-cols-2 text-xs font-mono pt-4 px-6 text-slate-500">
-                            <div class="text-left">COMPANY ............................................................................</div>
-                            <div class="text-right">NAME ............................................................................</div>
-                        </div>
-                        <p class="text-[9px] text-slate-500 italic pt-2">
-                            We provide drivers with <span class="font-bold text-slate-800">FREE</span> self-contained FB accommodation with hot showers.
-                        </p>
-                    </div>
+                    <?php endif; ?>
 
-                    <div class="pt-2">
-                        <table class="pdf-matrix-table w-full text-center border-collapse text-xs font-bold text-slate-800">
+                    <!-- Dynamic Heavy-Bordered Matrix Table -->
+                    <div>
+                        <table class="w-full text-center border-collapse text-xs font-bold text-slate-800">
                             <thead>
-                                <tr class="bg-slate-50 border-b-2 border-slate-900">
-                                    <th rowspan="2" class="p-2 text-left text-[10px] uppercase tracking-wider min-w-[150px]">Seasons / Dates</th>
-                                    <th rowspan="2" class="p-2 min-w-[120px]">Room Tier</th>
-                                    <th colspan="2" class="p-1.5 uppercase text-slate-900">Single</th>
-                                    <th colspan="2" class="p-1.5 uppercase text-slate-900">Double</th>
-                                    <th colspan="2" class="p-1.5 uppercase text-slate-900">Triple</th>
-                                    <th colspan="2" class="p-1.5 uppercase text-slate-900">Family</th>
+                                <tr class="bg-white">
+                                    <th colspan="2" rowspan="2" class="border-b-2 border-l-2 border-r-2 border-t-2 border-slate-900 bg-white"></th>
+                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Single</th>
+                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Double</th>
+                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Triple</th>
+                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Family</th>
                                 </tr>
-                                <tr class="bg-slate-100 font-mono text-[9px] text-slate-600">
-                                    <th class="p-1">KSH</th><th class="p-1">USD</th>
-                                    <th class="p-1">KSH</th><th class="p-1">USD</th>
-                                    <th class="p-1">KSH</th><th class="p-1">USD</th>
-                                    <th class="p-1">KSH</th><th class="p-1">USD</th>
+                                <tr class="bg-white text-[10px] text-slate-800">
+                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
+                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
+                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
+                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
                                 </tr>
                             </thead>
                             <tbody id="pdf-matrix-tbody"></tbody>
                         </table>
                     </div>
 
-                    <div class="pt-4 border-t-2 border-slate-800 text-[10px] leading-relaxed space-y-4 font-semibold text-slate-700">
-                        <div class="bg-slate-100 p-2 text-center text-[9px] font-bold text-slate-600 rounded-lg border border-slate-200">
-                            We are connected to the main power grid so have power 24/7. Our self-contained rooms have instant showers. We have Wi-Fi in the common area.
+                    <!-- Dynamic PDF Footer Upload -->
+                    <?php if (!empty($set['rack_rates_footer_path'])): ?>
+                        <div class="w-full text-center mt-6 pt-4">
+                            <img src="<?php echo htmlspecialchars($set['rack_rates_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-32">
                         </div>
-                    </div>
+                    <?php endif; ?>
+
                 </div>
             </div>
 
-            <!-- 4. GLOBAL FOOTER -->
             <?php include 'Includes/footer.php'; ?>
 
         </main>
     </div>
 
-    <!-- DATA CAPTURE MODAL (Only renders for Admins) -->
+    <!-- DATA CAPTURE MODAL -->
     <?php if ($isAdmin): ?>
     <div id="rate-modal-backdrop" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-5 max-h-[95vh] overflow-y-auto relative animate-fadeIn transition-colors duration-300">
-            <button onclick="closeRateModal()" class="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-sm z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <button onclick="closeRateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-sm z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3 transition-colors">
                 <h2 id="modal-terminal-title" class="text-base font-bold text-[#0f172a] dark:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-money-check-dollar text-[#046a38] dark:text-emerald-500"></i> Group Rates Assignment Terminal
+                    <i class="fa-solid fa-money-check-dollar theme-text"></i> Group Rates Assignment Terminal
                 </h2>
             </div>
 
@@ -225,34 +209,34 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
                 <div class="space-y-3 pt-2">
                     <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 pb-1 transition-colors">Capacity Configuration Grid</h4>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-3 bg-emerald-50/20 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 space-y-2 transition-colors">
-                            <span class="block text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400">Single Room</span>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-slate-800 dark:text-slate-400">Single Room</span>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="amt-single-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500 transition-colors" required>
-                                <input type="number" id="amt-single-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500 transition-colors" required>
+                                <input type="number" id="amt-single-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
+                                <input type="number" id="amt-single-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
                             </div>
                         </div>
-                        <div class="p-3 bg-blue-50/20 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 space-y-2 transition-colors">
-                            <span class="block text-[10px] uppercase font-bold text-blue-800 dark:text-blue-400">Double Room</span>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-slate-800 dark:text-slate-400">Double Room</span>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="amt-double-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-blue-500 transition-colors" required>
-                                <input type="number" id="amt-double-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-blue-500 transition-colors" required>
+                                <input type="number" id="amt-double-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
+                                <input type="number" id="amt-double-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
                             </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="p-3 bg-amber-50/20 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 space-y-2 transition-colors">
-                            <span class="block text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400">Triple Room</span>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-slate-800 dark:text-slate-400">Triple Room</span>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="amt-triple-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-amber-500 transition-colors" required>
-                                <input type="number" id="amt-triple-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-amber-500 transition-colors" required>
+                                <input type="number" id="amt-triple-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
+                                <input type="number" id="amt-triple-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
                             </div>
                         </div>
-                        <div class="p-3 bg-purple-50/20 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 space-y-2 transition-colors">
-                            <span class="block text-[10px] uppercase font-bold text-purple-800 dark:text-purple-400">Family Room</span>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 transition-colors">
+                            <span class="block text-[10px] uppercase font-bold text-slate-800 dark:text-slate-400">Family Room</span>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="amt-family-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-purple-500 transition-colors" required>
-                                <input type="number" id="amt-family-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-purple-500 transition-colors" required>
+                                <input type="number" id="amt-family-ksh" placeholder="KSh" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
+                                <input type="number" id="amt-family-usd" placeholder="USD" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-slate-500 transition-colors" required>
                             </div>
                         </div>
                     </div>
@@ -260,7 +244,7 @@ $isAdmin = (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin
 
                 <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 transition-colors">
                     <button type="button" onclick="closeRateModal()" class="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
-                    <button type="submit" class="bg-[#046a38] hover:bg-[#03542c] text-white font-black py-2.5 px-6 rounded-xl shadow-md transition">Save Matrix</button>
+                    <button type="submit" class="theme-btn text-white font-black py-2.5 px-6 rounded-xl shadow-md transition">Save Matrix</button>
                 </div>
             </form>
         </div>

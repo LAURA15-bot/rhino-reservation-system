@@ -5,6 +5,20 @@ if (!isset($_SESSION['logged_in'])) {
     exit;
 }
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// 1. LOAD SYSTEM SETTINGS
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+// 2. EXTRACT ACTIVE THEME
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,14 +33,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Bumped Version to clear cache for new Action Buttons -->
-    <script src="js/notifications.js?v=3" defer></script>
+    <!-- Bumped Version to clear cache for new Theme Variables -->
+    <script src="js/notifications.js?v=4" defer></script>
     
     <style>
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+            --theme-color-focus: <?php echo $primaryColor; ?>33;
+        }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        .theme-btn { background-color: var(--theme-color); transition: filter 0.2s; }
+        .theme-btn:hover { filter: brightness(85%); }
+        .theme-text { color: var(--theme-color); }
+        .theme-border { border-color: var(--theme-color); }
+        .theme-focus:focus { outline: none; border-color: var(--theme-color); box-shadow: 0 0 0 3px var(--theme-color-focus); }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
+<body data-primary-color="<?php echo $primaryColor; ?>" class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
     
     <div class="flex h-screen w-screen overflow-hidden">
         
@@ -41,7 +64,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="shrink-0 space-y-6">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 transition-colors duration-300">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-500 flex items-center justify-center shadow-inner shrink-0">
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900/50 theme-text flex items-center justify-center shadow-inner shrink-0 border border-slate-200 dark:border-slate-700">
                                 <i class="fa-solid fa-bell text-lg"></i>
                             </div>
                             <div>
@@ -63,7 +86,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div class="flex items-center gap-3">
                             <div class="flex items-center gap-2">
                                 <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:block">Urgency:</label>
-                                <select id="urgencyFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg block p-2 cursor-pointer outline-none transition-colors duration-300" onchange="filterNotificationsTable();">
+                                <select id="urgencyFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block p-2 cursor-pointer transition-colors duration-300" onchange="filterNotificationsTable();">
                                     <option value="All">All Pending Alerts</option>
                                     <option value="Expired">Expired Holds</option>
                                     <option value="Today">Due Today</option>
@@ -77,7 +100,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300 h-auto">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center transition-colors duration-300">
                         <h3 class="text-xs font-bold tracking-wide uppercase text-slate-900 dark:text-white flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Action Required Ledgers
+                            <i class="fa-solid fa-clock-rotate-left theme-text"></i> Action Required Ledgers
                         </h3>
                         <span id="records-counter-badge" class="text-[11px] bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 px-2.5 py-1 font-bold rounded-lg border border-slate-200 dark:border-slate-700 transition-colors duration-300">0 Alerts Found</span>
                     </div>

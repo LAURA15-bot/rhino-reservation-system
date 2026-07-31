@@ -5,6 +5,20 @@ if (!isset($_SESSION['logged_in']) || strtolower($_SESSION['role']) !== 'admin')
     exit; 
 }
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// 1. LOAD SYSTEM SETTINGS
+if (!isset($GLOBALS['system_settings'])) {
+    require_once 'Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+
+// 2. EXTRACT ACTIVE THEME
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,14 +32,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Link to external JS (Version bumped to load dark mode logic) -->
-    <script src="js/system_logs.js?v=3" defer></script>
+    <!-- Link to external JS (Version bumped to load Theme Variables logic) -->
+    <script src="js/system_logs.js?v=4" defer></script>
     
     <style>
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+            --theme-color-focus: <?php echo $primaryColor; ?>33;
+        }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        .theme-btn { background-color: var(--theme-color); transition: filter 0.2s; }
+        .theme-btn:hover { filter: brightness(85%); }
+        .theme-text { color: var(--theme-color); }
+        .theme-border { border-color: var(--theme-color); }
+        .theme-focus:focus { outline: none; border-color: var(--theme-color) !important; box-shadow: 0 0 0 3px var(--theme-color-focus) !important; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
+<body data-primary-color="<?php echo $primaryColor; ?>" class="bg-[#f8fafc] dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
     
     <!-- FULL SCREEN WRAPPER -->
     <div class="flex h-screen w-screen overflow-hidden">
@@ -46,7 +69,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="shrink-0 space-y-4 mb-4">
                     
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex items-center gap-3 transition-colors duration-300">
-                        <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 flex items-center justify-center shadow-inner shrink-0">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900/50 theme-text flex items-center justify-center shadow-inner shrink-0 border border-slate-200 dark:border-slate-700">
                             <i class="fa-solid fa-shield-halved text-lg"></i>
                         </div>
                         <div>
@@ -70,7 +93,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <!-- Date Timeframe Filter -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Date Timeframe</label>
-                            <select id="dateFilter" onchange="toggleCustomDateFilters(); filterLogsTable();" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg focus:ring-rose-500 focus:border-rose-500 block w-40 p-2.5 cursor-pointer outline-none transition-colors duration-300">
+                            <select id="dateFilter" onchange="toggleCustomDateFilters(); filterLogsTable();" class="theme-focus bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg block w-40 p-2.5 cursor-pointer outline-none transition-colors duration-300">
                                 <option value="today">Today</option>
                                 <option value="7">Past 7 Days</option>
                                 <option value="30">Past 30 Days</option>
@@ -83,11 +106,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div id="customDateWrapper" class="hidden flex items-end gap-3">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Date From</label>
-                                <input type="date" id="startDate" onchange="filterLogsTable()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300">
+                                <input type="date" id="startDate" onchange="filterLogsTable()" class="theme-focus bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none transition-colors duration-300">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Date To</label>
-                                <input type="date" id="endDate" onchange="filterLogsTable()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300">
+                                <input type="date" id="endDate" onchange="filterLogsTable()" class="theme-focus bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none transition-colors duration-300">
                             </div>
                         </div>
 
@@ -95,11 +118,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div class="flex items-end gap-3 border-l border-slate-100 dark:border-slate-700 pl-4 ml-2 transition-colors duration-300">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Time From (Opt)</label>
-                                <input type="time" id="startTime" onchange="filterLogsTable()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300">
+                                <input type="time" id="startTime" onchange="filterLogsTable()" class="theme-focus bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none transition-colors duration-300">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Time To (Opt)</label>
-                                <input type="time" id="endTime" onchange="filterLogsTable()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300">
+                                <input type="time" id="endTime" onchange="filterLogsTable()" class="theme-focus bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg p-2.5 outline-none transition-colors duration-300">
                             </div>
                         </div>
 

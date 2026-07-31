@@ -23,7 +23,7 @@ function fetchRatesData() {
 
 function openRateModal() {
     if (currentSystemConsoleMode === 'view') return;
-    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-money-check-dollar text-[#046a38] dark:text-emerald-500"></i> Post Group Rates Assignment Terminal`;
+    document.getElementById('modal-terminal-title').innerHTML = `<i class="fa-solid fa-money-check-dollar theme-text"></i> Post Group Rates Assignment Terminal`;
     document.getElementById('rate-season').disabled = false;
     document.getElementById('rate-room-tier').disabled = false;
     document.getElementById('rate-entry-form').reset();
@@ -53,7 +53,7 @@ function switchSystemConsoleMode(targetMode) {
         viewBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300";
         if(advisory) advisory.classList.add('hidden');
         createBtn.removeAttribute('disabled');
-        createBtn.className = "bg-[#046a38] hover:bg-[#03542c] text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer";
+        createBtn.className = "theme-btn text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer";
         document.querySelectorAll('.log-actions-column').forEach(el => el.classList.remove('hidden'));
     }
     renderMasterGroupedMatrixBoard();
@@ -168,36 +168,39 @@ function populatePDFMatrixTbody() {
 
     for (let seasonKey in contractRatesDatabase) {
         const seasonData = contractRatesDatabase[seasonKey];
-        let isFirstRowForSeason = true;
+        const tiers = Object.keys(seasonData).filter(k => k !== 'label');
+        const tiersCount = tiers.length;
+        let rowIndex = 0;
 
-        for (let tierKey in seasonData) {
-            if (tierKey === 'label') continue;
+        tiers.forEach(tierKey => {
             const tierValues = seasonData[tierKey];
+            const isLastRowForSeason = (rowIndex === tiersCount - 1);
             const tr = document.createElement('tr');
             
-            // NOTE: No dark mode classes here so the PDF generates perfectly in light mode
-            tr.className = "text-slate-900 font-bold border-b-2 border-slate-900";
+            tr.className = "text-slate-900 font-bold bg-white";
+            
+            const borderBClass = isLastRowForSeason ? 'border-b-2 border-slate-900' : 'border-b border-slate-400';
 
             let seasonLabelCell = '';
-            if (isFirstRowForSeason) {
-                seasonLabelCell = `<td rowspan="2" class="border-r-2 border-slate-900 p-2.5 text-left font-black bg-slate-50/50 leading-tight">${seasonData.label}</td>`;
-                isFirstRowForSeason = false;
+            if (rowIndex === 0) {
+                seasonLabelCell = `<td rowspan="${tiersCount}" class="border-l-2 border-r-2 border-slate-900 border-b-2 p-3 text-left font-black leading-tight bg-white align-top">${seasonData.label}</td>`;
             }
 
             tr.innerHTML = `
                 ${seasonLabelCell}
-                <td class="border-r-2 border-slate-900 p-2 text-left bg-slate-50/20 text-[10px] uppercase">${tierKey}</td>
-                <td class="border-r border-slate-300 p-1.5 font-mono">${tierValues.single.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-1.5 font-mono text-slate-600">${tierValues.single.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-1.5 font-mono">${tierValues.double.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-1.5 font-mono text-slate-600">${tierValues.double.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-1.5 font-mono">${tierValues.triple.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-1.5 font-mono text-slate-600">${tierValues.triple.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-1.5 font-mono">${tierValues.family.ksh.toLocaleString()}</td>
-                <td class="p-1.5 font-mono text-slate-600">${tierValues.family.usd.toLocaleString()}</td>
+                <td class="border-r-2 border-slate-900 p-2.5 text-left text-[11px] uppercase ${borderBClass}">${tierKey}</td>
+                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.single.ksh.toLocaleString()}</td>
+                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.single.usd.toLocaleString()}</td>
+                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.double.ksh.toLocaleString()}</td>
+                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.double.usd.toLocaleString()}</td>
+                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.triple.ksh.toLocaleString()}</td>
+                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.triple.usd.toLocaleString()}</td>
+                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.family.ksh.toLocaleString()}</td>
+                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.family.usd.toLocaleString()}</td>
             `;
             pdfTbody.appendChild(tr);
-        }
+            rowIndex++;
+        });
     }
 }
 
@@ -207,8 +210,8 @@ function compileAndDownloadRatesPDF() {
     targetElementNode.classList.remove('hidden');
 
     html2pdf().set({
-        margin: [0.3, 0.3, 0.3, 0.3],
-        filename: `Rhino_Tourist_Camp_Rack_Rates_Matrix.pdf`,
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `Rhino_Tourist_Camp_Rack_Rates.pdf`,
         image: { type: 'jpeg', quality: 0.99 },
         html2canvas: { scale: 2.5, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
@@ -217,6 +220,7 @@ function compileAndDownloadRatesPDF() {
     });
 }
 
+// ... exportRatesToExcel logic remains functionally identical
 async function exportRatesToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Contract Rates", { views: [{ showGridLines: false }] });

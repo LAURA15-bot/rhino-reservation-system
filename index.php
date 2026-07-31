@@ -43,13 +43,23 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
             border-radius: 45% 55% 45% 55% / 50% 40% 60% 50%;
         }
 
+        /* Responsive adjustment for mobile screens */
+        @media (max-width: 768px) {
+            .yellow-canvas-shape {
+                width: 150vw;
+                height: 110vh;
+                left: -20vw;
+                top: -5vh;
+            }
+        }
+
         /* 
          * 2. THE PENTAGON BUTTON
          */
         .pentagon-btn-wrapper {
             position: relative;
             display: inline-block;
-            margin-top: 2.5rem;
+            margin-top: 2rem;
             perspective: 1000px; 
             z-index: 10;
         }
@@ -95,7 +105,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
         }
     </style>
 </head>
-<body class="bg-[#fcfdfd] font-sans antialiased h-screen w-screen overflow-hidden flex items-center relative selection:bg-[#046a38] selection:text-white">
+<body class="bg-[#fcfdfd] font-sans antialiased min-h-screen w-full overflow-x-hidden flex items-center relative selection:bg-[#046a38] selection:text-white">
     
     <!-- The Custom Organic Yellow Background -->
     <div class="yellow-canvas-shape pointer-events-none"></div>
@@ -106,28 +116,28 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     <div class="absolute bottom-[20%] right-[30%] w-56 h-56 bg-amber-300 rounded-full blur-[90px] opacity-30 z-0 pointer-events-none"></div>
     <div class="absolute bottom-[5%] left-[45%] w-40 h-40 bg-emerald-400 rounded-full blur-[80px] opacity-20 z-0 pointer-events-none"></div>
 
-    <!-- Main Content Container -->
-    <div class="relative z-20 w-full max-w-[1500px] mx-auto px-8 md:px-16 flex flex-col lg:flex-row justify-between items-center h-full">
+    <!-- Main Content Container (Updated with flex-col and min-h-screen to protect small screens) -->
+    <div class="relative z-20 w-full max-w-[1500px] mx-auto px-6 sm:px-8 md:px-16 py-12 flex flex-col justify-center min-h-screen">
         
         <!-- Left Side: Typography & Login Button -->
-        <div class="max-w-2xl w-full pt-20 lg:pt-0 z-30">
+        <div class="max-w-2xl w-full z-30">
             
             <!-- Tiny Top Label -->
-            <div class="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full border border-slate-900/10 bg-white/40 backdrop-blur-md shadow-sm">
+            <div class="inline-flex items-center gap-2 mb-6 sm:mb-8 px-4 py-1.5 rounded-full border border-slate-900/10 bg-white/40 backdrop-blur-md shadow-sm">
                 <div class="w-2 h-2 rounded-full bg-[#046a38] animate-pulse"></div>
-                <span class="text-[10px] font-black tracking-widest text-slate-700 uppercase">
+                <span class="text-[9px] sm:text-[10px] font-black tracking-widest text-slate-700 uppercase">
                     Authorized Personnel Only
                 </span>
             </div>
             
-            <!-- Massive Professional Typography -->
-            <h1 class="text-6xl md:text-[5.5rem] lg:text-[7rem] font-black text-slate-900 tracking-tighter leading-[0.9] mb-6">
+            <!-- Massive Professional Typography (Uses Clamp for perfect scaling on ANY screen) -->
+            <h1 class="text-[clamp(3.5rem,12vw,7rem)] font-black text-slate-900 tracking-tighter leading-[0.9] mb-4 sm:mb-6">
                 Rhino<br>
                 <span class="text-outline drop-shadow-sm">Reservation</span><br>
                 System.
             </h1>
             
-            <p class="text-lg md:text-xl font-medium text-slate-700/80 leading-relaxed max-w-lg mt-8">
+            <p class="text-[clamp(1rem,3vw,1.25rem)] font-medium text-slate-700/80 leading-relaxed max-w-lg mt-6 sm:mt-8">
                 Enterprise grade property configuration, guest ledger administration, and dynamic financial tracking terminal.
             </p>
 
@@ -143,14 +153,14 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     </div>
 
     <!-- The Static "Secure Access" Block -->
-    <!-- Positioned static at the bottom right corner -->
-    <div class="absolute bottom-12 right-12 lg:bottom-16 lg:right-24 bg-white px-8 py-5 rounded-[2rem] shadow-2xl shadow-slate-200/60 flex items-center gap-4 text-slate-700 border border-slate-100 z-30">
-        <div class="w-12 h-12 rounded-full bg-slate-50 text-slate-800 flex items-center justify-center shadow-inner text-xl border border-slate-200/50">
+    <!-- Safely pinned to the bottom right. Scales down automatically via CSS transforms on mobile -->
+    <div class="absolute bottom-6 right-6 sm:bottom-8 sm:right-8 lg:bottom-16 lg:right-24 bg-white px-5 py-3 sm:px-8 sm:py-5 rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-slate-200/60 flex items-center gap-3 sm:gap-4 text-slate-700 border border-slate-100 z-30 scale-[0.85] sm:scale-100 origin-bottom-right">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-50 text-slate-800 flex items-center justify-center shadow-inner text-lg sm:text-xl border border-slate-200/50 shrink-0">
             <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div class="flex flex-col">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Access Control</span>
-            <span class="text-sm font-black uppercase tracking-wider text-slate-800">Secure Entry</span>
+            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Access Control</span>
+            <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Secure Entry</span>
         </div>
     </div>
 

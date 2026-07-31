@@ -9,7 +9,11 @@ let selectedHighlightDate = null;
 let globalReservationsDatabase = [];
 let currentManifestDateStr = null;
 
+// Dynamically fetch Theme Color
+let primaryThemeColor = '#046a38';
+
 document.addEventListener("DOMContentLoaded", () => {
+    primaryThemeColor = document.body.dataset.primaryColor || '#046a38';
     loadCalendarData();
 
     // REAL-TIME BACKGROUND POLLING ENGINE
@@ -56,8 +60,19 @@ function changeMonth(direction) {
 
 function switchCalendarViewTab(mode) {
     activeCalendarTabMode = mode;
-    document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.className = "flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
-    document.getElementById('tab-' + mode).className = "flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all bg-[#046a38] text-white shadow-sm";
+    
+    // Reset all tabs to neutral
+    document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+        btn.className = "flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700";
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+    });
+    
+    // Apply theme color to active tab dynamically
+    const activeTab = document.getElementById('tab-' + mode);
+    activeTab.className = "flex-1 min-w-[100px] text-center py-2 px-3 rounded-lg text-xs font-bold transition-all text-white shadow-sm";
+    activeTab.style.backgroundColor = primaryThemeColor;
+    
     renderCalendarMatrixGrid();
 }
 
@@ -80,7 +95,6 @@ function compileDayOccupancyMap(dateStr) {
                 map.totalRooms += a.roomCount;
             });
             
-            // Logic for Confirmed (C) vs Reserved (R)
             let isConfirmed = (res.paid > 0 || res.status === 'Booked' || res.paymentStatus === 'Paid in Full' || res.paymentStatus === 'Partially Paid');
             if (isConfirmed) {
                 map.confirmedRooms += roomsOccupied;
@@ -89,7 +103,6 @@ function compileDayOccupancyMap(dateStr) {
             }
         }
 
-        // Logic for Check-outs (OUT)
         if (isCheckingOut) {
             map.checkOutPax += res.guestCount;
         }
@@ -135,7 +148,7 @@ function renderCalendarMatrixGrid() {
 
         let occupancyPercentage = maxLimit > 0 ? (currentBooked / maxLimit) * 100 : 0;
         
-        // CSS Specific to Light / Dark Mode configurations (Vibrant shades)
+        // SEMANTIC COLORS: Preserved exactly as requested
         let cellColorClass = "bg-white dark:bg-slate-800"; 
         if (currentBooked === 0) {
             cellColorClass = "bg-white dark:bg-slate-800";
@@ -147,7 +160,13 @@ function renderCalendarMatrixGrid() {
             cellColorClass = "bg-emerald-200 dark:bg-emerald-900/80"; 
         }
 
-        dayCell.className = `p-3 min-h-[100px] flex flex-col border-b border-r border-slate-100 dark:border-slate-700/50 relative transition-colors ${cellColorClass} cursor-pointer hover:opacity-90 ${isSelected ? 'ring-2 ring-[#046a38] ring-inset' : ''}`;
+        // Apply Tailwind classes with inline CSS variable for the ring color
+        dayCell.className = `p-3 min-h-[100px] flex flex-col border-b border-r border-slate-100 dark:border-slate-700/50 relative transition-colors ${cellColorClass} cursor-pointer hover:opacity-90 ${isSelected ? 'ring-2 ring-inset' : ''}`;
+        
+        if (isSelected) {
+            dayCell.style.setProperty('--tw-ring-color', primaryThemeColor);
+        }
+
         dayCell.setAttribute('onclick', `openDailyManifest('${ISOStringDate}')`);
         
         let innerHTML = `<div class="flex justify-between items-center"><span class="text-sm font-black text-slate-800 dark:text-slate-100">${day}</span>`;
@@ -172,8 +191,6 @@ function renderCalendarMatrixGrid() {
             innerHTML += `<div class="mt-auto pt-2 text-center border-t border-slate-300/40 dark:border-slate-700/50"><span class="text-xs ${textCol}">${currentBooked} / ${maxLimit} Booked</span></div>`;
         }
 
-        // Removed the C: R: OUT badges from the grid to declutter it!
-
         dayCell.innerHTML = innerHTML;
         container.appendChild(dayCell);
     }
@@ -188,7 +205,7 @@ function openDailyManifest(dateStr) {
     const displayOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     document.getElementById('manifest-date-title').innerText = new Date(dateStr).toLocaleDateString('en-US', displayOptions);
     
-    // Inject the Detailed Room Summary + The C/R/OUT Badges into the modal header
+    // Inject the Detailed Room Summary + The Semantic C/R/OUT Badges
     let metrics = compileDayOccupancyMap(dateStr);
     document.getElementById('manifest-room-summary').innerHTML = `
         <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/80 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
@@ -210,7 +227,6 @@ function openDailyManifest(dateStr) {
         </div>
     `;
 
-    // Reset filters
     document.getElementById('manifest-room-filter').value = 'all';
     document.getElementById('manifest-status-filter').value = 'all';
     
@@ -246,15 +262,12 @@ function renderManifestTable() {
         let isOccupying = (evalDate >= start && evalDate < end);
         let isCheckingOut = (evalDate.getTime() === end.getTime());
         
-        if (!isOccupying && !isCheckingOut) return; // Skip if date is totally irrelevant
+        if (!isOccupying && !isCheckingOut) return;
 
-        // Status Filtering Check
         let isConfirmed = (res.paid > 0 || res.status === 'Booked' || res.paymentStatus === 'Paid in Full' || res.paymentStatus === 'Partially Paid');
         let mappedStatus = isCheckingOut ? 'checkout' : (isConfirmed ? 'confirmed' : 'reserved');
         
         if (statusFilter !== 'all' && statusFilter !== mappedStatus) return;
-
-        // Room Filtering Check
         if (roomFilter !== 'all' && res.roomTypeFull !== roomFilter) return;
 
         hasVisibleRecords = true;
@@ -267,6 +280,7 @@ function renderManifestTable() {
             sourceHtml += `<span class="block text-[10px] text-slate-400 dark:text-slate-500">${escapeHtml(res.bookingOfficer)}</span>`;
         }
 
+        // SEMANTIC COLORS: Used strictly for operational awareness.
         let badgeClass = 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800';
         let badgeLabel = 'RESERVED';
         if (isCheckingOut) {

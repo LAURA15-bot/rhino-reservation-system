@@ -3,7 +3,6 @@
 let globalBillingData = [];
 let filteredRecords = [];
 
-// Pagination Variables
 let currentPage = 1;
 let rowsPerPage = 10;
 
@@ -30,7 +29,7 @@ function loadBillingData(searchQuery = '') {
         .then(response => {
             if(response.success) {
                 globalBillingData = response.data;
-                filterBillingTable(); // Automatically handles pagination and rendering
+                filterBillingTable(); 
             } else {
                 console.error("Failed to load billing ledger");
             }
@@ -49,7 +48,6 @@ function resetSearch() {
     loadBillingData('');
 }
 
-// 1. FILTER ENGINE
 function filterBillingTable() {
     const dateFilter = document.getElementById('dateFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
@@ -83,7 +81,6 @@ function filterBillingTable() {
     renderTablePage();
 }
 
-// 2. PAGINATION CONTROLS
 window.changeRowsPerPage = function() {
     const val = document.getElementById('rowsPerPageFilter').value;
     rowsPerPage = val === 'all' ? 'all' : parseInt(val);
@@ -96,11 +93,11 @@ window.changePage = function(direction) {
     renderTablePage();
 }
 
-// 3. TABLE RENDER ENGINE
 function renderTablePage() {
     const tbody = document.getElementById('billingTableBody');
     tbody.innerHTML = '';
     
+    const primaryThemeColor = document.body.dataset.primaryColor || '#046a38';
     const totalRecords = filteredRecords.length;
     document.getElementById('records-counter-badge').innerText = `${totalRecords} Records Found`;
 
@@ -148,7 +145,7 @@ function renderTablePage() {
             if (isPastDue) {
                 actionBtnHtml = `<span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 rounded font-bold text-[10px] uppercase">Expired Hold</span>`;
             } else {
-                actionBtnHtml = `<button onclick='openPaymentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' class="bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[#046a38] dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 font-bold px-3 py-1.5 rounded-lg transition-colors text-xs"><i class="fa-solid fa-cash-register mr-1"></i> Pay</button>`;
+                actionBtnHtml = `<button onclick='openPaymentModal(${JSON.stringify(res)}, ${paid}, ${bal}, ${JSON.stringify(pricingObj)}, "${currency}", ${total}, ${discount})' style="color: ${primaryThemeColor}; border-color: ${primaryThemeColor}; background-color: ${primaryThemeColor}1A;" class="hover:bg-slate-100 dark:hover:bg-slate-800 font-bold px-3 py-1.5 rounded-lg border transition-colors text-xs"><i class="fa-solid fa-cash-register mr-1"></i> Pay</button>`;
             }
         }
 
@@ -179,19 +176,10 @@ function updatePaginationUI(startIdx, endIdx, total) {
 
     const prevBtn = document.getElementById('prev-page-btn');
     const nextBtn = document.getElementById('next-page-btn');
-
-    if (currentPage === 1 || total === 0 || rowsPerPage === 'all') {
-        prevBtn.disabled = true;
-    } else {
-        prevBtn.disabled = false;
-    }
+    if (currentPage === 1 || total === 0 || rowsPerPage === 'all') prevBtn.disabled = true; else prevBtn.disabled = false;
 
     const totalPages = rowsPerPage === 'all' ? 1 : Math.ceil(total / rowsPerPage);
-    if (currentPage >= totalPages || total === 0 || rowsPerPage === 'all') {
-        nextBtn.disabled = true;
-    } else {
-        nextBtn.disabled = false;
-    }
+    if (currentPage >= totalPages || total === 0 || rowsPerPage === 'all') nextBtn.disabled = true; else nextBtn.disabled = false;
 }
 
 function escapeHtml(str) {
@@ -221,14 +209,12 @@ function openPaymentModal(booking, paid, balance, pricingData, currency, finalTo
     document.getElementById('input-currency').value = currency;
     
     const backdrop = document.getElementById('payment-modal');
-    backdrop.classList.remove('hidden');
-    backdrop.classList.add('flex');
+    backdrop.classList.remove('hidden'); backdrop.classList.add('flex');
 }
 
 function closePaymentModal() { 
     const backdrop = document.getElementById('payment-modal');
-    backdrop.classList.add('hidden');
-    backdrop.classList.remove('flex');
+    backdrop.classList.add('hidden'); backdrop.classList.remove('flex');
 }
 
 function toggleReferenceField() {
@@ -277,28 +263,46 @@ function openDocumentModal(booking, paid, balance, pricingData, currency, finalT
     if(receiptBtn) receiptBtn.style.display = 'flex';
     
     const backdrop = document.getElementById('document-modal');
-    backdrop.classList.remove('hidden');
-    backdrop.classList.add('flex');
+    backdrop.classList.remove('hidden'); backdrop.classList.add('flex');
 }
 
 function closeDocumentModal() { 
     const backdrop = document.getElementById('document-modal');
-    backdrop.classList.add('hidden');
-    backdrop.classList.remove('flex');
+    backdrop.classList.add('hidden'); backdrop.classList.remove('flex');
+}
+
+// Fixed compilation logic handles the permanently off-screen layout block perfectly
+function processPDFGeneration(filename) {
+    const element = document.getElementById('printable-document-area');
+    
+    Swal.fire({
+        title: 'Compiling PDF...',
+        text: 'Generating secure white-label asset clearance page.',
+        allowEscapeKey: false,
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
+    html2pdf().set({ 
+        margin: 0.5, 
+        filename: filename, 
+        image: { type: 'jpeg', quality: 1.0 }, 
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 850 }, 
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
+    }).from(element).save().then(() => { 
+        Swal.close();
+        closeDocumentModal(); 
+    });
 }
 
 function generatePDFReceipt() {
     populatePrintableDocument("Official Payment Receipt");
-    const element = document.getElementById('printable-document-area');
-    element.classList.remove('hidden');
-    html2pdf().set({ margin: 0.5, filename: `Receipt_Booking_${window.activeTargetBooking.id}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(element).save().then(() => { element.classList.add('hidden'); closeDocumentModal(); });
+    processPDFGeneration(`Receipt_Booking_${window.activeTargetBooking.id}.pdf`);
 }
 
 function generatePDFInvoice() {
     populatePrintableDocument("Itemized Accommodation Invoice");
-    const element = document.getElementById('printable-document-area');
-    element.classList.remove('hidden');
-    html2pdf().set({ margin: 0.5, filename: `Invoice_Booking_${window.activeTargetBooking.id}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(element).save().then(() => { element.classList.add('hidden'); closeDocumentModal(); });
+    processPDFGeneration(`Invoice_Booking_${window.activeTargetBooking.id}.pdf`);
 }
 
 function safeSetText(id, text) {

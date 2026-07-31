@@ -7,6 +7,14 @@ if (!isset($_SESSION['logged_in']) || strtolower($_SESSION['role']) !== 'admin')
 $current_page = basename($_SERVER['PHP_SELF']);
 require_once 'Includes/load_settings.php';
 $set = $GLOBALS['system_settings'];
+
+// Extract Theme Color so we can apply it to the Settings Page Buttons
+$theme = $set['theme_color'] ?? 'emerald';
+$primaryColor = '#046a38'; 
+if ($theme === 'safari') $primaryColor = '#8B3C28';
+elseif ($theme === 'kairi') $primaryColor = '#802b1f';
+elseif ($theme === 'blue') $primaryColor = '#2563eb';
+elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,20 +23,28 @@ $set = $GLOBALS['system_settings'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Settings - Rhino Camp</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class', }
-    </script>
+    <script> tailwind.config = { darkMode: 'class', } </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- External JavaScript Link -->
-    <script src="js/settings.js?v=1" defer></script>
+    <!-- Version bumped to clear cache -->
+    <script src="js/settings.js?v=6" defer></script>
     
     <style>
+        :root {
+            --theme-color: <?php echo $primaryColor; ?>;
+            --theme-color-focus: <?php echo $primaryColor; ?>33;
+        }
         .custom-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; }
+        .theme-btn { background-color: var(--theme-color); transition: filter 0.2s; }
+        .theme-btn:hover { filter: brightness(85%); }
+        .theme-focus:focus { outline: none; border-color: var(--theme-color) !important; box-shadow: 0 0 0 3px var(--theme-color-focus) !important; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
+<body data-primary-color="<?php echo $primaryColor; ?>" class="bg-[#f8fafc] dark:bg-slate-900 text-[#334155] dark:text-slate-200 font-sans antialiased min-h-screen overflow-hidden transition-colors duration-300">
     
     <div class="flex h-screen w-screen overflow-hidden">
         
@@ -38,134 +54,510 @@ $set = $GLOBALS['system_settings'];
             
             <?php include 'Includes/header.php'; ?>
 
-            <div class="p-4 lg:p-8 space-y-8 max-w-[1200px] mx-auto w-full flex-1">
+            <div class="p-4 lg:p-8 max-w-[1400px] mx-auto w-full flex-1">
                 
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors duration-300">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 flex items-center justify-center shadow-inner shrink-0 border border-slate-200 dark:border-slate-700">
-                            <i class="fa-solid fa-gear text-xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-base font-black tracking-widest text-slate-900 dark:text-white uppercase">System Preferences</h1>
-                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Customize workspace branding, typography, and themes</p>
-                        </div>
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-inner shrink-0" style="background-color: <?php echo $primaryColor; ?>;">
+                        <i class="fa-solid fa-sliders text-xl"></i>
                     </div>
-                    <button type="button" onclick="saveAllSettings()" class="bg-[#046a38] hover:bg-[#03542c] text-white font-black tracking-wide py-3 px-6 rounded-xl text-xs shadow-md transition flex items-center gap-2 w-full sm:w-auto justify-center">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Save All Changes
-                    </button>
+                    <div>
+                        <h1 class="text-base font-black tracking-widest text-slate-900 dark:text-white uppercase">Control Center & Branding</h1>
+                        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Manage live website text, company logo assets, and visual themes</p>
+                    </div>
                 </div>
 
-                <form id="system-settings-form" onsubmit="event.preventDefault(); saveAllSettings();" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     
-                    <!-- MODULE 1: GLOBAL HEADER BRANDING -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
-                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700 transition-colors">
-                            <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-heading text-blue-500"></i> Global Header Branding
-                            </h2>
+                    <!-- Left Tab Navigation -->
+                    <div class="lg:col-span-1 space-y-2">
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 space-y-1">
+                            <button onclick="switchSettingsTab('tab-sidebar', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-white shadow-sm" style="background-color: <?php echo $primaryColor; ?>;">
+                                <i class="fa-solid fa-bars-staggered w-4 text-center"></i> Sidebar Configuration
+                            </button>
+                            <button onclick="switchSettingsTab('tab-header', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <i class="fa-solid fa-heading w-4 text-center"></i> Global Header
+                            </button>
+                            <button onclick="switchSettingsTab('tab-layouts', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <i class="fa-solid fa-file-pdf w-4 text-center"></i> PDF & Print Layouts
+                            </button>
+                            <button onclick="switchSettingsTab('tab-themes', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <i class="fa-solid fa-palette w-4 text-center"></i> Workspace Themes
+                            </button>
+                            <button onclick="switchSettingsTab('tab-footer', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <i class="fa-solid fa-shoe-prints w-4 text-center"></i> Footer Credentials
+                            </button>
                         </div>
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Main Title Text</label>
-                                <input type="text" id="setting_header_title" value="<?php echo htmlspecialchars($set['header_title']); ?>" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                    </div>
+
+                    <!-- Main Forms Area -->
+                    <div class="lg:col-span-3 relative pb-20">
+                        
+                        <!-- TAB 1: SIDEBAR CONFIGURATION -->
+                        <div id="tab-sidebar" class="settings-content-section space-y-4">
+                            
+                            <!-- Accordion 1: Sidebar Brand Assets -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-sidebar-brand', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-image text-emerald-500"></i> Sidebar Brand Assets
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-up text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-sidebar-brand" class="block">
+                                    <form onsubmit="event.preventDefault(); saveSection('Sidebar Brand', this);">
+                                        <div class="p-6 space-y-6">
+                                            <!-- Radio Buttons -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Brand Display Mode</label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="sidebar_display_type" value="icon" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo $set['sidebar_display_type'] === 'icon' ? 'checked' : ''; ?> onchange="toggleDisplayMode('sidebar_display_type', 'wrapper_sidebar_icon', 'wrapper_sidebar_logo')">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Use FontAwesome Icon</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="sidebar_display_type" value="logo" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo $set['sidebar_display_type'] === 'logo' ? 'checked' : ''; ?> onchange="toggleDisplayMode('sidebar_display_type', 'wrapper_sidebar_icon', 'wrapper_sidebar_logo')">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Upload Image Logo</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- The Dynamic Icon Input Box -->
+                                            <div id="wrapper_sidebar_icon" class="<?php echo $set['sidebar_display_type'] === 'logo' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Sidebar Icon Class</label>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-xl shrink-0 border border-slate-200 dark:border-slate-700" style="color: <?php echo $primaryColor; ?>;">
+                                                        <i class="fa-solid <?php echo htmlspecialchars($set['sidebar_icon']); ?>" id="preview_sidebar_icon"></i>
+                                                    </div>
+                                                    <input type="text" name="sidebar_icon" value="<?php echo htmlspecialchars($set['sidebar_icon']); ?>" onkeyup="document.getElementById('preview_sidebar_icon').className = 'fa-solid ' + this.value" class="theme-focus flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-mono transition-colors">
+                                                </div>
+                                            </div>
+
+                                            <!-- The Dynamic Logo Upload Box -->
+                                            <div id="wrapper_sidebar_logo" class="<?php echo $set['sidebar_display_type'] === 'icon' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Sidebar Logo</label>
+                                                <?php if (!empty($set['logo_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Active Logo:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['logo_path']); ?>" alt="Current Logo" class="h-10 object-contain">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="sidebar-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-40 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-3"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Click to browse</span> or drag and drop</p>
+                                                        <p id="sidebar-file-name" class="mt-2 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="sidebar-dropzone" type="file" name="sidebar_logo_file" class="hidden" accept=".png, .jpg, .jpeg, .svg, .webp" onchange="displayFileName(this, 'sidebar-file-name')" />
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Brand Assets
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Subtitle / Context Text</label>
-                                <input type="text" id="setting_header_subtitle" value="<?php echo htmlspecialchars($set['header_subtitle']); ?>" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+
+                            <!-- Accordion 2: Sidebar Typography -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-sidebar-text', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-font text-blue-500"></i> Sidebar Typography
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-sidebar-text" class="hidden">
+                                    <form onsubmit="event.preventDefault(); saveSection('Sidebar Texts', this);">
+                                        <div class="p-6 space-y-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Primary Text (Optional)</label>
+                                                    <input type="text" name="sidebar_title" value="<?php echo htmlspecialchars($set['sidebar_title']); ?>" placeholder="Leave blank to maximize logo size" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold transition-colors">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Secondary Subtext (Optional)</label>
+                                                    <input type="text" name="sidebar_subtitle" value="<?php echo htmlspecialchars($set['sidebar_subtitle']); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm transition-colors">
+                                                </div>
+                                            </div>
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Typography
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Header Icon (FontAwesome Class)</label>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center text-xl shrink-0 border border-blue-100 dark:border-blue-800">
-                                        <i class="fa-solid <?php echo htmlspecialchars($set['header_icon']); ?>" id="preview_header_icon"></i>
-                                    </div>
-                                    <input type="text" id="setting_header_icon" value="<?php echo htmlspecialchars($set['header_icon']); ?>" onkeyup="document.getElementById('preview_header_icon').className = 'fa-solid ' + this.value" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+
+                            <!-- Accordion 3: Navigation Menu Links -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-sidebar-links', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-list-ul text-amber-500"></i> Core Navigation Links
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-sidebar-links" class="hidden">
+                                    <form onsubmit="event.preventDefault(); saveSection('Navigation Links', this);">
+                                        <div class="p-6 space-y-4">
+                                            <?php 
+                                                $navItems = [
+                                                    ['key' => 'nav_dashboard', 'label' => 'Dashboard Module'],
+                                                    ['key' => 'nav_calendar', 'label' => 'Calendar Matrix Module'],
+                                                    ['key' => 'nav_guest', 'label' => 'Guest Register Module'],
+                                                    ['key' => 'nav_alerts', 'label' => 'Alerts Module'],
+                                                    ['key' => 'nav_rates', 'label' => 'Rates Module'],
+                                                    ['key' => 'nav_finance', 'label' => 'Finance Module']
+                                                ];
+                                                foreach ($navItems as $nav): 
+                                                    $nameKey = $nav['key'] . '_name';
+                                                    $iconKey = $nav['key'] . '_icon';
+                                            ?>
+                                                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                                    <div class="sm:col-span-3 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400"><?php echo $nav['label']; ?></div>
+                                                    <div class="sm:col-span-5">
+                                                        <input type="text" name="<?php echo $nameKey; ?>" value="<?php echo htmlspecialchars($set[$nameKey]); ?>" placeholder="Label" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2.5 text-sm font-bold transition-colors">
+                                                    </div>
+                                                    <div class="sm:col-span-4 flex items-center gap-2">
+                                                        <div class="w-10 h-10 flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg shadow-inner"><i class="fa-solid <?php echo htmlspecialchars($set[$iconKey]); ?>" id="preview_<?php echo $iconKey; ?>"></i></div>
+                                                        <input type="text" name="<?php echo $iconKey; ?>" value="<?php echo htmlspecialchars($set[$iconKey]); ?>" placeholder="fa-icon" onkeyup="document.getElementById('preview_<?php echo $iconKey; ?>').className = 'fa-solid ' + this.value" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2.5 text-sm font-mono transition-colors">
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Apply Navigation Changes
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- MODULE 2: SIDEBAR BRANDING -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
-                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700 transition-colors">
-                            <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-bars-staggered text-emerald-500"></i> Sidebar Navigation Branding
-                            </h2>
-                        </div>
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Short Title</label>
-                                <input type="text" id="setting_sidebar_title" value="<?php echo htmlspecialchars($set['sidebar_title']); ?>" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" required>
+                        <!-- TAB 2: GLOBAL HEADER CONFIGURATION -->
+                        <div id="tab-header" class="settings-content-section space-y-4 hidden">
+                            <!-- Accordion: Header Brand Assets -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-header-brand', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-image text-emerald-500"></i> Global Header Brand Assets
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-up text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-header-brand" class="block">
+                                    <form onsubmit="event.preventDefault(); saveSection('Header Brand', this);">
+                                        <div class="p-6 space-y-6">
+                                            <!-- Radio Buttons -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Header Display Mode</label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="header_display_type" value="icon" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo $set['header_display_type'] === 'icon' ? 'checked' : ''; ?> onchange="toggleDisplayMode('header_display_type', 'wrapper_header_icon', 'wrapper_header_logo')">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Use FontAwesome Icon</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="header_display_type" value="logo" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo $set['header_display_type'] === 'logo' ? 'checked' : ''; ?> onchange="toggleDisplayMode('header_display_type', 'wrapper_header_icon', 'wrapper_header_logo')">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Upload Header Logo</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- The Dynamic Icon Input Box -->
+                                            <div id="wrapper_header_icon" class="<?php echo $set['header_display_type'] === 'logo' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Header Icon Class</label>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-xl shrink-0 border border-slate-200 dark:border-slate-700" style="color: <?php echo $primaryColor; ?>;">
+                                                        <i class="fa-solid <?php echo htmlspecialchars($set['header_icon']); ?>" id="preview_header_icon"></i>
+                                                    </div>
+                                                    <input type="text" name="header_icon" value="<?php echo htmlspecialchars($set['header_icon']); ?>" onkeyup="document.getElementById('preview_header_icon').className = 'fa-solid ' + this.value" class="theme-focus flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-mono transition-colors">
+                                                </div>
+                                            </div>
+
+                                            <!-- The Dynamic Logo Upload Box -->
+                                            <div id="wrapper_header_logo" class="<?php echo $set['header_display_type'] === 'icon' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Image</label>
+                                                <?php if (!empty($set['header_logo_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block">
+                                                        <img src="<?php echo htmlspecialchars($set['header_logo_path']); ?>" alt="Current Header Logo" class="h-10 object-contain">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="header-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-40 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-3"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Click to browse</span> or drag and drop</p>
+                                                        <p id="header-file-name" class="mt-2 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="header-dropzone" type="file" name="header_logo_file" class="hidden" accept=".png, .jpg, .jpeg, .svg, .webp" onchange="displayFileName(this, 'header-file-name')" />
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Header Brand Assets
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Subtitle</label>
-                                <input type="text" id="setting_sidebar_subtitle" value="<?php echo htmlspecialchars($set['sidebar_subtitle']); ?>" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" required>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Sidebar Icon (FontAwesome Class)</label>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center text-xl shrink-0 border border-emerald-100 dark:border-emerald-800">
-                                        <i class="fa-solid <?php echo htmlspecialchars($set['sidebar_icon']); ?>" id="preview_sidebar_icon"></i>
-                                    </div>
-                                    <input type="text" id="setting_sidebar_icon" value="<?php echo htmlspecialchars($set['sidebar_icon']); ?>" onkeyup="document.getElementById('preview_sidebar_icon').className = 'fa-solid ' + this.value" class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" required>
+
+                            <!-- Accordion: Header Typography -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-header-text', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-font text-blue-500"></i> Header Typography
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-header-text" class="hidden">
+                                    <form onsubmit="event.preventDefault(); saveSection('Header Details', this);">
+                                        <div class="p-6 space-y-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Main Title Text (Required)</label>
+                                                    <input type="text" name="header_title" value="<?php echo htmlspecialchars($set['header_title']); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold transition-colors" required>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Subtitle (Optional)</label>
+                                                    <input type="text" name="header_subtitle" value="<?php echo htmlspecialchars($set['header_subtitle']); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm transition-colors">
+                                                </div>
+                                            </div>
+
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Apply Header Text
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- MODULE 3: THEME SCHEME SELECTOR -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
-                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700 transition-colors">
-                            <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-palette text-purple-500"></i> Workspace Theme Scheme
-                            </h2>
-                        </div>
-                        <div class="p-6">
-                            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Select Accent Color Palette</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all <?php echo $set['theme_color'] === 'emerald' ? 'border-[#046a38] bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700'; ?>">
-                                    <input type="radio" name="theme_color" value="emerald" <?php echo $set['theme_color'] === 'emerald' ? 'checked' : ''; ?> class="hidden">
-                                    <div class="w-8 h-8 rounded-full bg-[#046a38] shadow"></div>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white">Forest Emerald</span>
-                                </label>
-                                <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all <?php echo $set['theme_color'] === 'blue' ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'; ?>">
-                                    <input type="radio" name="theme_color" value="blue" <?php echo $set['theme_color'] === 'blue' ? 'checked' : ''; ?> class="hidden">
-                                    <div class="w-8 h-8 rounded-full bg-blue-600 shadow"></div>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white">Ocean Blue</span>
-                                </label>
-                                <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all <?php echo $set['theme_color'] === 'amber' ? 'border-amber-600 bg-amber-50/50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700'; ?>">
-                                    <input type="radio" name="theme_color" value="amber" <?php echo $set['theme_color'] === 'amber' ? 'checked' : ''; ?> class="hidden">
-                                    <div class="w-8 h-8 rounded-full bg-amber-500 shadow"></div>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white">Sunset Amber</span>
-                                </label>
-                                <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all <?php echo $set['theme_color'] === 'indigo' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-slate-200 dark:border-slate-700'; ?>">
-                                    <input type="radio" name="theme_color" value="indigo" <?php echo $set['theme_color'] === 'indigo' ? 'checked' : ''; ?> class="hidden">
-                                    <div class="w-8 h-8 rounded-full bg-indigo-600 shadow"></div>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white">Royal Indigo</span>
-                                </label>
+                        <!-- NEW TAB: PDF & PRINT LAYOUTS -->
+                        <div id="tab-layouts" class="settings-content-section space-y-4 hidden">
+                            
+                            <!-- Accordion: Rack Rates Documents -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-rack-rates', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-tags text-rose-500"></i> Rack Rates PDF Layout
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-up text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-rack-rates" class="block">
+                                    <form onsubmit="event.preventDefault(); saveSection('Rack Rates PDF Layout', this);">
+                                        <div class="p-6 space-y-6">
+                                            
+                                            <!-- Rack Rates Header Graphic -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Graphic (Optional)</label>
+                                                <?php if (!empty($set['rack_rates_header_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block w-full">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Header Image:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['rack_rates_header_path']); ?>" alt="Rack Rates Header" class="h-16 w-full object-contain bg-white rounded">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="rack-header-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-image text-2xl text-slate-400 mb-2"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Browse Header Image</span></p>
+                                                        <p id="rack-header-file-name" class="mt-1 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="rack-header-dropzone" type="file" name="rack_header_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'rack-header-file-name')" />
+                                                </label>
+                                            </div>
+
+                                            <!-- Rack Rates Footer Graphic -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Footer Graphic (Optional)</label>
+                                                <?php if (!empty($set['rack_rates_footer_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block w-full">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Footer Image:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['rack_rates_footer_path']); ?>" alt="Rack Rates Footer" class="h-16 w-full object-contain bg-white rounded">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="rack-footer-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-image text-2xl text-slate-400 mb-2"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Browse Footer Image</span></p>
+                                                        <p id="rack-footer-file-name" class="mt-1 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="rack-footer-dropzone" type="file" name="rack_footer_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'rack-footer-file-name')" />
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Rack Rates PDF Settings
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Accordion: Receipts Documents -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-receipts', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-receipt text-amber-500"></i> Client Receipts PDF Layout
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-receipts" class="hidden">
+                                    <form onsubmit="event.preventDefault(); saveSection('Receipt PDF Layout', this);">
+                                        <div class="p-6 space-y-6">
+                                            
+                                            <!-- Receipt Header Graphic -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Graphic (Optional)</label>
+                                                <?php if (!empty($set['receipt_header_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block w-full">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Header Image:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['receipt_header_path']); ?>" alt="Receipt Header" class="h-16 w-full object-contain bg-white rounded">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="receipt-header-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-image text-2xl text-slate-400 mb-2"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Browse Header Image</span></p>
+                                                        <p id="receipt-header-file-name" class="mt-1 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="receipt-header-dropzone" type="file" name="receipt_header_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'receipt-header-file-name')" />
+                                                </label>
+                                            </div>
+
+                                            <!-- Receipt Footer Graphic -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Footer Graphic (Optional)</label>
+                                                <?php if (!empty($set['receipt_footer_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block w-full">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Footer Image:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['receipt_footer_path']); ?>" alt="Receipt Footer" class="h-16 w-full object-contain bg-white rounded">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="receipt-footer-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-image text-2xl text-slate-400 mb-2"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Browse Footer Image</span></p>
+                                                        <p id="receipt-footer-file-name" class="mt-1 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="receipt-footer-dropzone" type="file" name="receipt_footer_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'receipt-footer-file-name')" />
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Receipt PDF Settings
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- MODULE 4: FOOTER SETTINGS -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
-                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700 transition-colors">
-                            <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-shoe-prints text-amber-500"></i> Footer Credentials
-                            </h2>
-                        </div>
-                        <div class="p-6">
-                            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Copyright & Company Name</label>
-                            <input type="text" id="setting_footer_text" value="<?php echo htmlspecialchars($set['footer_text']); ?>" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-colors" required>
-                        </div>
-                    </div>
+                        <!-- TAB 4: WORKSPACE THEMES -->
+                        <div id="tab-themes" class="settings-content-section space-y-4 hidden">
+                            <form onsubmit="event.preventDefault(); saveSection('Theme Colors', this);" class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-palette text-purple-500"></i> Workspace Color Schemes
+                                    </h2>
+                                </div>
+                                <div class="p-6">
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 border-b border-slate-100 dark:border-slate-700 pb-6 mb-6">
+                                        
+                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'safari' ? 'border-[#8B3C28] bg-amber-50/50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                            <input type="radio" name="theme_color" value="safari" <?php echo $set['theme_color'] === 'safari' ? 'checked' : ''; ?> class="hidden">
+                                            <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#8B3C28] shadow"></div><div class="w-6 h-6 rounded-full bg-[#E6C556] shadow"></div></div>
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">Rhino Safari<br><span class="font-normal text-[9px] text-slate-400">Terracotta & Gold</span></span>
+                                        </label>
 
-                </form>
+                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'kairi' ? 'border-[#802b1f] bg-red-50/50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                            <input type="radio" name="theme_color" value="kairi" <?php echo $set['theme_color'] === 'kairi' ? 'checked' : ''; ?> class="hidden">
+                                            <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#802b1f] shadow"></div><div class="w-6 h-6 rounded-full bg-[#e6b800] shadow"></div></div>
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">Kairi Tours<br><span class="font-normal text-[9px] text-slate-400">Burgundy & Gold</span></span>
+                                        </label>
+
+                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'emerald' ? 'border-[#046a38] bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                            <input type="radio" name="theme_color" value="emerald" <?php echo $set['theme_color'] === 'emerald' ? 'checked' : ''; ?> class="hidden">
+                                            <div class="w-6 h-6 rounded-full bg-[#046a38] shadow"></div>
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">Forest Emerald<br><span class="font-normal text-[9px] text-slate-400">Classic Green</span></span>
+                                        </label>
+
+                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'blue' ? 'border-[#2563eb] bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                            <input type="radio" name="theme_color" value="blue" <?php echo $set['theme_color'] === 'blue' ? 'checked' : ''; ?> class="hidden">
+                                            <div class="w-6 h-6 rounded-full bg-[#2563eb] shadow"></div>
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">Ocean Blue<br><span class="font-normal text-[9px] text-slate-400">Standard Blue</span></span>
+                                        </label>
+
+                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'custom' ? 'border-slate-800 dark:border-slate-400 bg-slate-100 dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(true)">
+                                            <input type="radio" name="theme_color" value="custom" <?php echo $set['theme_color'] === 'custom' ? 'checked' : ''; ?> class="hidden">
+                                            <div class="w-6 h-6 rounded-full bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-red-500 via-purple-500 to-blue-500 shadow"></div>
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">Custom HEX<br><span class="font-normal text-[9px] text-slate-400">Mix your own</span></span>
+                                        </label>
+                                    </div>
+
+                                    <div id="wrapper_custom_colors" class="p-5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 <?php echo $set['theme_color'] === 'custom' ? '' : 'hidden'; ?>">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Primary Color</label>
+                                                <input type="color" name="custom_primary" value="<?php echo htmlspecialchars($set['custom_primary']); ?>">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Secondary Color</label>
+                                                <input type="color" name="custom_secondary" value="<?php echo htmlspecialchars($set['custom_secondary']); ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                        <i class="fa-solid fa-check"></i> Apply Selected Theme
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- TAB 5: FOOTER CREDENTIALS -->
+                        <div id="tab-footer" class="settings-content-section space-y-4 hidden">
+                            <form onsubmit="event.preventDefault(); saveSection('Footer Configuration', this);" class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-100 dark:border-slate-700">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-shoe-prints text-amber-500"></i> Footer Credentials
+                                    </h2>
+                                </div>
+                                <div class="p-6">
+                                    <div class="border-b border-slate-100 dark:border-slate-700 pb-6 mb-6">
+                                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Company Name & Registration</label>
+                                        <input type="text" name="footer_text" value="<?php echo htmlspecialchars($set['footer_text']); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm transition-colors" required>
+                                        <p class="text-[9px] text-slate-400 mt-2 italic">The copyright symbol (&copy;) and the current calendar year are added automatically.</p>
+                                    </div>
+                                    <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                        <i class="fa-solid fa-check"></i> Update Footer Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
 
             </div>
-
             <?php include 'Includes/footer.php'; ?>
-
         </main>
     </div>
 </body>
