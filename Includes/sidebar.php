@@ -45,7 +45,8 @@ $hasSidebarText = !empty(trim($set['sidebar_title'])) || !empty(trim($set['sideb
     <div class="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll space-y-6 pb-6">
         
         <!-- Brand Header (Dynamically Sizes Logo based on Text Presence) -->
-        <div class="flex items-center gap-3 px-4 pt-6 pb-2 whitespace-nowrap overflow-hidden <?php echo !$hasSidebarText ? 'justify-center' : ''; ?> shrink-0">
+        <!-- Removed whitespace-nowrap and overflow-hidden to allow natural wrapping -->
+        <div class="flex items-center gap-3 px-4 pt-6 pb-2 <?php echo !$hasSidebarText ? 'justify-center' : ''; ?> shrink-0">
             
             <?php if ($displayType === 'logo' && !empty($logoPath)): ?>
                 <div class="shrink-0 flex items-center justify-center transition-all duration-300 <?php echo $hasSidebarText ? 'w-14 h-14' : 'w-full h-24 px-4'; ?>">
@@ -59,7 +60,8 @@ $hasSidebarText = !empty(trim($set['sidebar_title'])) || !empty(trim($set['sideb
             <?php endif; ?>
 
             <?php if ($hasSidebarText): ?>
-            <div class="sidebar-text transition-opacity duration-300 flex flex-col justify-center">
+            <!-- Added whitespace-normal and break-words to ensure long titles flow to the next line -->
+            <div class="sidebar-text transition-opacity duration-300 flex flex-col justify-center whitespace-normal break-words pr-2">
                 <?php if (!empty($set['sidebar_title'])): ?>
                     <h1 class="text-sm font-black tracking-wider uppercase text-slate-900 dark:text-white transition-colors leading-tight"><?php echo htmlspecialchars($set['sidebar_title']); ?></h1>
                 <?php endif; ?>
