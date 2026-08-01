@@ -271,13 +271,18 @@ function closeDocumentModal() {
     backdrop.classList.add('hidden'); backdrop.classList.remove('flex');
 }
 
-// Fixed compilation logic handles the permanently off-screen layout block perfectly
+// Clean rendering logic utilizing pre-calculated DOM layout
 function processPDFGeneration(filename) {
     const element = document.getElementById('printable-document-area');
     
+    // Bring the pre-rendered element into view for html2canvas
+    element.style.visibility = 'visible';
+    element.style.left = '0';
+    element.style.zIndex = '99999';
+
     Swal.fire({
         title: 'Compiling PDF...',
-        text: 'Generating secure white-label asset clearance page.',
+        text: 'Generating official document asset...',
         allowEscapeKey: false,
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading() }
@@ -287,11 +292,39 @@ function processPDFGeneration(filename) {
         margin: 0.5, 
         filename: filename, 
         image: { type: 'jpeg', quality: 1.0 }, 
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 850 }, 
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true, 
+            windowWidth: 800 
+        }, 
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
     }).from(element).save().then(() => { 
-        Swal.close();
-        closeDocumentModal(); 
+        
+        // Send the element back off-screen and hide it again
+        element.style.visibility = 'hidden';
+        element.style.left = '-9999px';
+        element.style.zIndex = '';
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Downloaded!',
+            text: 'Your PDF receipt has been saved successfully.',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            closeDocumentModal();
+        });
+        
+    }).catch(err => {
+        console.error("PDF Generation Error: ", err);
+        
+        // Failsafe cleanup
+        element.style.visibility = 'hidden';
+        element.style.left = '-9999px';
+        element.style.zIndex = '';
+        
+        Swal.fire('Error', 'Failed to compile the PDF document.', 'error');
     });
 }
 

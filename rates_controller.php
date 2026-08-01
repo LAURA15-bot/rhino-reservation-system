@@ -35,7 +35,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
     <script> const IS_USER_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>; </script>
-    <script src="js/rates_controller.js?v=3" defer></script>
+    <script src="js/rates_controller.js?v=4" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -123,47 +123,43 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                         </table>
                     </div>
                 </div>
+<!-- HIDDEN PDF DOCUMENT CANVAS -->
+<div id="hidden-pdf-document-canvas" class="hidden bg-white p-4 text-slate-800">
+    
+    <!-- Dynamic PDF Header Upload -->
+    <?php if (!empty($set['rack_rates_header_path'])): ?>
+        <div class="w-full text-center mb-4">
+            <img src="<?php echo htmlspecialchars($set['rack_rates_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-32">
+        </div>
+    <?php endif; ?>
 
-                <!-- HIDDEN PDF DOCUMENT CANVAS (Matches Image 3 Output) -->
-                <div id="hidden-pdf-document-canvas" class="hidden bg-white p-8 text-slate-800">
-                    
-                    <!-- Dynamic PDF Header Upload -->
-                    <?php if (!empty($set['rack_rates_header_path'])): ?>
-                        <div class="w-full text-center mb-6">
-                            <img src="<?php echo htmlspecialchars($set['rack_rates_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-40">
-                        </div>
-                    <?php endif; ?>
+    <!-- Scaled Down Screen-Matched Matrix Table -->
+    <div class="overflow-hidden border border-slate-300 rounded-lg mt-2">
+        <table class="w-full text-left border-collapse text-[10px] font-medium text-slate-800">
+            <thead>
+                <tr class="bg-slate-100 uppercase text-[9px] font-bold tracking-wider border-b-2 border-slate-300">
+                    <th class="p-2 border-r border-slate-300 w-44">Seasons / Dates</th>
+                    <th class="p-2 border-r border-slate-300">Room Tier</th>
+                    <th class="p-2 text-center border-r border-slate-300 bg-emerald-50 text-emerald-900">Single (KSh / $)</th>
+                    <th class="p-2 text-center border-r border-slate-300 bg-blue-50 text-blue-900">Double (KSh / $)</th>
+                    <th class="p-2 text-center border-r border-slate-300 bg-amber-50 text-amber-900">Triple (KSh / $)</th>
+                    <th class="p-2 text-center bg-purple-50 text-purple-900">Family (KSh / $)</th>
+                </tr>
+            </thead>
+            <tbody id="pdf-matrix-tbody" class="divide-y divide-slate-200">
+                <!-- Cloned dynamically from screen via JS -->
+            </tbody>
+        </table>
+    </div>
 
-                    <!-- Dynamic Heavy-Bordered Matrix Table -->
-                    <div>
-                        <table class="w-full text-center border-collapse text-xs font-bold text-slate-800">
-                            <thead>
-                                <tr class="bg-white">
-                                    <th colspan="2" rowspan="2" class="border-b-2 border-l-2 border-r-2 border-t-2 border-slate-900 bg-white"></th>
-                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Single</th>
-                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Double</th>
-                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Triple</th>
-                                    <th colspan="2" class="p-2 border-t-2 border-r-2 border-slate-900 uppercase text-slate-900">Family</th>
-                                </tr>
-                                <tr class="bg-white text-[10px] text-slate-800">
-                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
-                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
-                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
-                                    <th class="p-1.5 border-b-2 border-r border-slate-400">KSH</th><th class="p-1.5 border-b-2 border-r-2 border-slate-900">USD</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pdf-matrix-tbody"></tbody>
-                        </table>
-                    </div>
+    <!-- Dynamic PDF Footer Upload -->
+    <?php if (!empty($set['rack_rates_footer_path'])): ?>
+        <div class="w-full text-center mt-4 pt-2">
+            <img src="<?php echo htmlspecialchars($set['rack_rates_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-24">
+        </div>
+    <?php endif; ?>
 
-                    <!-- Dynamic PDF Footer Upload -->
-                    <?php if (!empty($set['rack_rates_footer_path'])): ?>
-                        <div class="w-full text-center mt-6 pt-4">
-                            <img src="<?php echo htmlspecialchars($set['rack_rates_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-32">
-                        </div>
-                    <?php endif; ?>
-
-                </div>
+</div>
             </div>
 
             <?php include 'Includes/footer.php'; ?>

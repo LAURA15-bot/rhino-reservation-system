@@ -1,5 +1,3 @@
-// js/rates_controller.js
-
 let currentSystemConsoleMode = 'view';
 let contractRatesDatabase = {};
 
@@ -163,45 +161,84 @@ function handleRateFormSubmit(e) {
 }
 
 function populatePDFMatrixTbody() {
+    const sourceTbody = document.getElementById('standard-matrix-tbody');
     const pdfTbody = document.getElementById('pdf-matrix-tbody');
-    pdfTbody.innerHTML = '';
+    
+    // Clone HTML and strip dark mode classes
+    pdfTbody.innerHTML = sourceTbody.innerHTML.replace(/dark:[^\s"']+/g, '');
 
-    for (let seasonKey in contractRatesDatabase) {
-        const seasonData = contractRatesDatabase[seasonKey];
-        const tiers = Object.keys(seasonData).filter(k => k !== 'label');
-        const tiersCount = tiers.length;
-        let rowIndex = 0;
+    const rows = pdfTbody.querySelectorAll('tr');
+    let currentDatesSpan = null;
 
-        tiers.forEach(tierKey => {
-            const tierValues = seasonData[tierKey];
-            const isLastRowForSeason = (rowIndex === tiersCount - 1);
-            const tr = document.createElement('tr');
+    rows.forEach(row => {
+        // Remove Action column from print
+        const actionCell = row.querySelector('.log-actions-column');
+        if (actionCell) actionCell.remove();
+        
+        row.style.backgroundColor = '#ffffff';
+        row.style.color = '#0f172a';
+        
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            // Shrink cell padding drastically for PDF
+            cell.style.border = '1px solid #cbd5e1'; 
+            cell.style.padding = '6px'; 
+            cell.classList.remove('p-4', 'pl-6');
             
-            tr.className = "text-slate-900 font-bold bg-white";
-            
-            const borderBClass = isLastRowForSeason ? 'border-b-2 border-slate-900' : 'border-b border-slate-400';
-
-            let seasonLabelCell = '';
-            if (rowIndex === 0) {
-                seasonLabelCell = `<td rowspan="${tiersCount}" class="border-l-2 border-r-2 border-slate-900 border-b-2 p-3 text-left font-black leading-tight bg-white align-top">${seasonData.label}</td>`;
+            // If this is the Season Name cell (has rowspan)
+            if (cell.hasAttribute('rowspan')) {
+                cell.removeAttribute('rowspan'); // Break the rowspan to 1 row
+                
+                // Extract the dates span to inject into the next row
+                const dateSpan = cell.querySelector('span');
+                if (dateSpan) {
+                    currentDatesSpan = dateSpan.innerHTML; 
+                    dateSpan.remove(); 
+                }
+                
+                // Clean up the Season title text
+                cell.innerHTML = cell.innerHTML.replace(/<br\s*[\/]?>/gi, '').trim();
+                cell.style.fontWeight = 'bold';
             }
-
-            tr.innerHTML = `
-                ${seasonLabelCell}
-                <td class="border-r-2 border-slate-900 p-2.5 text-left text-[11px] uppercase ${borderBClass}">${tierKey}</td>
-                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.single.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.single.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.double.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.double.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.triple.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.triple.usd.toLocaleString()}</td>
-                <td class="border-r border-slate-300 p-2 font-mono ${borderBClass}">${tierValues.family.ksh.toLocaleString()}</td>
-                <td class="border-r-2 border-slate-900 p-2 font-mono text-slate-700 ${borderBClass}">${tierValues.family.usd.toLocaleString()}</td>
-            `;
-            pdfTbody.appendChild(tr);
-            rowIndex++;
         });
-    }
+
+        // Identify the 2nd row of the season (it has 1 less cell) and inject dates
+        if (cells.length < 6 && currentDatesSpan) {
+            const dateCell = document.createElement('td');
+            dateCell.innerHTML = currentDatesSpan;
+            dateCell.style.border = '1px solid #cbd5e1';
+            dateCell.style.padding = '6px';
+            dateCell.style.fontSize = '9px';
+            dateCell.style.color = '#475569';
+            dateCell.style.backgroundColor = '#f8fafc'; 
+            
+            row.insertBefore(dateCell, row.firstChild); // Place Dates under Season Name
+            currentDatesSpan = null; // Reset for next season loop
+        }
+        
+        // Shrink the USD currency text blocks
+        const priceSpans = row.querySelectorAll('span.block');
+        priceSpans.forEach(span => {
+            span.style.fontSize = '9px';
+            span.style.marginTop = '2px'; 
+        });
+    });
+}
+
+function compileAndDownloadRatesPDF() {
+    populatePDFMatrixTbody();
+    const targetElementNode = document.getElementById('hidden-pdf-document-canvas');
+    targetElementNode.classList.remove('hidden');
+
+    html2pdf().set({
+        margin: [0.2, 0.4, 0.2, 0.4], // Squeezed margins to maximize page space
+        filename: `Rhino_Tourist_Camp_Rack_Rates.pdf`,
+        image: { type: 'jpeg', quality: 0.99 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true }, // Lowered scale for compact fit
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+    }).from(targetElementNode).save().then(() => {
+        targetElementNode.classList.add('hidden');
+    });
 }
 
 function compileAndDownloadRatesPDF() {
@@ -220,7 +257,6 @@ function compileAndDownloadRatesPDF() {
     });
 }
 
-// ... exportRatesToExcel logic remains functionally identical
 async function exportRatesToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Contract Rates", { views: [{ showGridLines: false }] });

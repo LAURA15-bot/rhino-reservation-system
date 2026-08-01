@@ -35,7 +35,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Script Cache Bust -->
-    <script src="js/payment_billing.js?v=7" defer></script>
+    <script src="js/payment_billing.js?v=8" defer></script>
     
     <style>
         :root {
@@ -232,9 +232,8 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
         </div>
     </div>
 
-    <!-- HIDDEN PRINT AREA -->
-    <!-- Fixed width w-[800px] ensures table proportions map perfectly to PDF -->
-    <div id="printable-document-area" class="hidden bg-white px-10 py-8 w-[800px] max-w-none text-slate-800 font-sans text-sm">
+    <!-- PRINT AREA (Pre-rendered off-screen with visibility: hidden to load layout & images) -->
+    <div id="printable-document-area" class="bg-white px-10 py-8 w-[800px] max-w-none text-slate-800 font-sans text-sm" style="position: absolute; left: -9999px; top: 0; visibility: hidden;">
         
         <!-- Dynamic PDF Header Upload -->
         <?php if (!empty($set['receipt_header_path'])): ?>
