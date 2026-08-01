@@ -1,3 +1,18 @@
+// js/rates_controller.js
+
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 let currentSystemConsoleMode = 'view';
 let contractRatesDatabase = {};
 
@@ -152,12 +167,13 @@ function handleRateFormSubmit(e) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            Swal.fire({ icon: 'success', title: 'Database Synced', text: 'Master Matrix successfully updated.', timer: 1200, showConfirmButton: false })
-            .then(() => { closeRateModal(); fetchRatesData(); });
+            closeRateModal(); 
+            fetchRatesData();
+            Toast.fire({ icon: 'success', title: 'Master Matrix successfully updated.' });
         } else {
-            Swal.fire({ icon: 'error', title: 'Database Error', text: data.message });
+            Toast.fire({ icon: 'error', title: data.message });
         }
-    }).catch(() => Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not communicate with the API.' }));
+    }).catch(() => Toast.fire({ icon: 'error', title: 'Network Error: Could not communicate with the API.' }));
 }
 
 function populatePDFMatrixTbody() {
@@ -230,31 +246,37 @@ function compileAndDownloadRatesPDF() {
     const targetElementNode = document.getElementById('hidden-pdf-document-canvas');
     targetElementNode.classList.remove('hidden');
 
-    html2pdf().set({
-        margin: [0.2, 0.4, 0.2, 0.4], // Squeezed margins to maximize page space
-        filename: `Rhino_Tourist_Camp_Rack_Rates.pdf`,
-        image: { type: 'jpeg', quality: 0.99 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true }, // Lowered scale for compact fit
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-    }).from(targetElementNode).save().then(() => {
-        targetElementNode.classList.add('hidden');
+    Swal.fire({
+        title: 'Compiling PDF...',
+        text: 'Generating rack rates document...',
+        allowEscapeKey: false,
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
     });
-}
 
-function compileAndDownloadRatesPDF() {
-    populatePDFMatrixTbody();
-    const targetElementNode = document.getElementById('hidden-pdf-document-canvas');
-    targetElementNode.classList.remove('hidden');
-
-    html2pdf().set({
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `Rhino_Tourist_Camp_Rack_Rates.pdf`,
-        image: { type: 'jpeg', quality: 0.99 },
-        html2canvas: { scale: 2.5, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-    }).from(targetElementNode).save().then(() => {
-        targetElementNode.classList.add('hidden');
-    });
+    setTimeout(() => {
+        html2pdf().set({
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: `Rhino_Tourist_Camp_Rack_Rates.pdf`,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                scrollY: 0 
+            },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        }).from(targetElementNode).save().then(() => {
+            targetElementNode.classList.add('hidden');
+            Swal.close();
+            Toast.fire({ icon: 'success', title: 'PDF successfully downloaded.' });
+        }).catch(err => {
+            console.error("PDF Generation Error: ", err);
+            targetElementNode.classList.add('hidden');
+            Swal.close();
+            Toast.fire({ icon: 'error', title: 'Failed to compile the PDF document.' });
+        });
+    }, 300);
 }
 
 async function exportRatesToExcel() {
@@ -360,4 +382,7 @@ async function exportRatesToExcel() {
 
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), "Rhino_Tourist_Camp_Rates.xlsx");
+    
+    // Fire the success toast for Excel download
+    Toast.fire({ icon: 'success', title: 'Excel spreadsheet exported successfully.' });
 }

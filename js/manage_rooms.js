@@ -1,5 +1,18 @@
 // js/manage_rooms.js
 
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Load
     loadRooms();
@@ -127,17 +140,21 @@ function submitRoomUpdate(e) {
     .then(res => {
         if(res.success) {
             closeRoomModal();
-            Swal.fire({
-                icon: 'success', 
-                title: 'Configuration Saved', 
-                text: 'Property limits and audit logs have been successfully updated.',
-                timer: 2000, 
-                showConfirmButton: false
+            
+            // Replaced the intrusive SweetAlert with the sleek Toast for success
+            Toast.fire({
+                icon: 'success',
+                title: 'Property limits updated.'
             });
+            
             loadRooms(); // Refresh the grid instantly
         } else {
-            Swal.fire('Error', res.message, 'error');
+            // Replaced the intrusive SweetAlert with the sleek Toast for API errors
+            Toast.fire({ icon: 'error', title: res.message });
         }
     })
-    .catch(() => Swal.fire('Network Error', 'Unable to reach the database API.', 'error'));
+    .catch(() => {
+        // Maintained the critical SweetAlert modal for fatal network disconnections
+        Swal.fire('Fatal Error', 'Unable to reach the database API.', 'error');
+    });
 }

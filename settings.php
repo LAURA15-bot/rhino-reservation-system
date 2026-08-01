@@ -28,7 +28,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Version bumped to clear cache -->
-    <script src="js/settings.js?v=6" defer></script>
+    <script src="js/settings.js?v=7" defer></script>
     
     <style>
         :root {
@@ -468,6 +468,70 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                     </form>
                                 </div>
                             </div>
+                            
+                            <!-- Accordion: Document Watermark Settings -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden mt-4">
+                                <button onclick="toggleAccordion('acc-watermark', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-stamp text-indigo-500"></i> Document Watermark Settings
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-watermark" class="hidden">
+                                    <form onsubmit="event.preventDefault(); saveSection('Document Watermark', this);">
+                                        <div class="p-6 space-y-6">
+                                            
+                                            <!-- Watermark Type Selector -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Watermark Type</label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="watermark_type" value="text" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo ($set['watermark_type'] ?? 'text') === 'text' ? 'checked' : ''; ?> onchange="document.getElementById('wrapper_watermark_text').classList.remove('hidden'); document.getElementById('wrapper_watermark_image').classList.add('hidden');">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Custom Text</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="radio" name="watermark_type" value="image" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo ($set['watermark_type'] ?? '') === 'image' ? 'checked' : ''; ?> onchange="document.getElementById('wrapper_watermark_text').classList.add('hidden'); document.getElementById('wrapper_watermark_image').classList.remove('hidden');">
+                                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Image / Logo</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Text Watermark Input -->
+                                            <div id="wrapper_watermark_text" class="<?php echo ($set['watermark_type'] ?? 'text') === 'image' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Watermark Text</label>
+                                                <input type="text" name="watermark_text" value="<?php echo htmlspecialchars($set['watermark_text'] ?? 'Rhino Tourist Camp'); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold transition-colors">
+                                                <p class="text-[9px] text-slate-400 mt-2 italic">This text will be scaled and rotated diagonally in the background of your PDFs.</p>
+                                            </div>
+
+                                            <!-- Image Watermark Upload -->
+                                            <div id="wrapper_watermark_image" class="<?php echo ($set['watermark_type'] ?? 'text') === 'text' ? 'hidden' : ''; ?> pt-2">
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Watermark Image</label>
+                                                <?php if (!empty($set['watermark_image_path'])): ?>
+                                                    <div class="mb-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl inline-block w-full">
+                                                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Current Watermark Image:</p>
+                                                        <img src="<?php echo htmlspecialchars($set['watermark_image_path']); ?>" alt="Watermark Image" class="h-16 object-contain bg-white rounded">
+                                                    </div>
+                                                <?php endif; ?>
+                                                <label for="watermark-dropzone" class="theme-focus flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl cursor-pointer bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <i class="fa-solid fa-image text-2xl text-slate-400 mb-2"></i>
+                                                        <p class="mb-1 text-sm text-slate-500 dark:text-slate-400 font-bold"><span class="font-black" style="color: <?php echo $primaryColor; ?>;">Browse Image</span></p>
+                                                        <p id="watermark-file-name" class="mt-1 text-xs font-black text-emerald-600 hidden bg-emerald-50 px-2 py-1 rounded"></p>
+                                                    </div>
+                                                    <input id="watermark-dropzone" type="file" name="watermark_image_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'watermark-file-name')" />
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Save Watermark Settings
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- TAB 4: WORKSPACE THEMES -->
@@ -481,31 +545,31 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4 border-b border-slate-100 dark:border-slate-700 pb-6 mb-6">
                                         
-                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'safari' ? 'border-[#8B3C28] bg-amber-50/50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                        <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'safari' ? 'border-[#8B3C28] bg-amber-50/50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('safari')">
                                             <input type="radio" name="theme_color" value="safari" <?php echo $set['theme_color'] === 'safari' ? 'checked' : ''; ?> class="hidden">
                                             <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#8B3C28] shadow"></div><div class="w-6 h-6 rounded-full bg-[#E6C556] shadow"></div></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Rhino Safari<br><span class="font-normal text-[9px] text-slate-400">Terracotta & Gold</span></span>
                                         </label>
 
-                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'kairi' ? 'border-[#802b1f] bg-red-50/50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                        <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'kairi' ? 'border-[#802b1f] bg-red-50/50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('kairi')">
                                             <input type="radio" name="theme_color" value="kairi" <?php echo $set['theme_color'] === 'kairi' ? 'checked' : ''; ?> class="hidden">
                                             <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#802b1f] shadow"></div><div class="w-6 h-6 rounded-full bg-[#e6b800] shadow"></div></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Kairi Tours<br><span class="font-normal text-[9px] text-slate-400">Burgundy & Gold</span></span>
                                         </label>
 
-                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'emerald' ? 'border-[#046a38] bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                        <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'emerald' ? 'border-[#046a38] bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('emerald')">
                                             <input type="radio" name="theme_color" value="emerald" <?php echo $set['theme_color'] === 'emerald' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[#046a38] shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Forest Emerald<br><span class="font-normal text-[9px] text-slate-400">Classic Green</span></span>
                                         </label>
 
-                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'blue' ? 'border-[#2563eb] bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false)">
+                                        <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'blue' ? 'border-[#2563eb] bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('blue')">
                                             <input type="radio" name="theme_color" value="blue" <?php echo $set['theme_color'] === 'blue' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[#2563eb] shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Ocean Blue<br><span class="font-normal text-[9px] text-slate-400">Standard Blue</span></span>
                                         </label>
 
-                                        <label class="cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'custom' ? 'border-slate-800 dark:border-slate-400 bg-slate-100 dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(true)">
+                                        <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'custom' ? 'border-slate-800 dark:border-slate-400 bg-slate-100 dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(true); selectThemeUI('custom')">
                                             <input type="radio" name="theme_color" value="custom" <?php echo $set['theme_color'] === 'custom' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-red-500 via-purple-500 to-blue-500 shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Custom HEX<br><span class="font-normal text-[9px] text-slate-400">Mix your own</span></span>

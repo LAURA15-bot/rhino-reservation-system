@@ -1,5 +1,18 @@
 // js/payment_billing.js
 
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 let globalBillingData = [];
 let filteredRecords = [];
 
@@ -240,13 +253,13 @@ function submitPaymentViaAjax(e) {
     .then(data => {
         if(data.success) {
             closePaymentModal();
-            Swal.fire({ icon: 'success', title: 'Payment Saved!', text: data.message, timer: 1500, showConfirmButton: false })
-            .then(() => loadBillingData());
+            loadBillingData();
+            Toast.fire({ icon: 'success', title: data.message });
         } else {
-            Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            Toast.fire({ icon: 'error', title: data.message });
         }
     })
-    .catch(() => Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not communicate with the API.' }));
+    .catch(() => Toast.fire({ icon: 'error', title: 'Network Error: Could not communicate with the API.' }));
 }
 
 function openDocumentModal(booking, paid, balance, pricingData, currency, finalTotal, discount) {
@@ -298,19 +311,19 @@ function processPDFGeneration(filename) {
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
         }).from(element).save().then(() => { 
             element.classList.add('hidden');
-            Swal.fire({
-                icon: 'success',
-                title: 'Downloaded!',
-                text: 'Your PDF receipt has been saved successfully.',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                closeDocumentModal();
-            });
+            Swal.close(); // Close the loading overlay
+            closeDocumentModal();
+            
+            // Fire the success toast
+            Toast.fire({ icon: 'success', title: 'PDF successfully downloaded.' });
+            
         }).catch(err => {
             console.error("PDF Generation Error: ", err);
             element.classList.add('hidden'); 
-            Swal.fire('Error', 'Failed to compile the PDF document.', 'error');
+            Swal.close(); // Close the loading overlay
+            
+            // Fire the error toast
+            Toast.fire({ icon: 'error', title: 'Failed to compile the PDF document.' });
         });
     }, 300);
 }

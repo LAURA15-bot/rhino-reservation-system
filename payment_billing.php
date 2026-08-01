@@ -235,11 +235,15 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <!-- PRINT AREA (Pre-rendered via Tailwind hidden class to maintain DOM flow) -->
     <div id="printable-document-area" class="hidden bg-white px-8 py-6 w-full max-w-2xl mx-auto text-slate-800 font-sans text-xs relative overflow-hidden">
         
-        <!-- Anti-Forgery Watermark -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-            <span class="text-[65px] font-bold uppercase tracking-widest" style="color: rgba(148, 163, 184, 0.15); transform: rotate(-35deg); font-family: 'Times New Roman', Times, serif; white-space: nowrap;">
-                Rhino Tourist Camp
-            </span>
+        <!-- Dynamic Anti-Forgery Watermark -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+            <?php if (($set['watermark_type'] ?? 'text') === 'image' && !empty($set['watermark_image_path'])): ?>
+                <img src="<?php echo htmlspecialchars($set['watermark_image_path']); ?>" alt="Watermark" class="w-3/4 h-3/4 object-contain opacity-30" style="filter: grayscale(100%);">
+            <?php else: ?>
+                <span class="font-black uppercase tracking-widest opacity-20" style="font-size: 4.5rem; color: #64748b; transform: rotate(-30deg); font-family: 'Times New Roman', Times, serif; white-space: nowrap; user-select: none;">
+                    <?php echo htmlspecialchars($set['watermark_text'] ?? 'Rhino Tourist Camp'); ?>
+                </span>
+            <?php endif; ?>
         </div>
 
         <!-- Content Wrapper (Keeps text above the watermark) -->

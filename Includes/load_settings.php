@@ -33,6 +33,9 @@ $GLOBALS['system_settings'] = [
     'rack_rates_footer_path' => '',
     'receipt_header_path' => '',
     'receipt_footer_path' => '',
+    'watermark_type' => 'text',
+    'watermark_text' => 'Rhino Tourist Camp',
+    'watermark_image_path' => '',
 
     // Footer & Theme
     'footer_text' => 'RHINO TOURIST CAMP. ALL RIGHTS RESERVED.', 

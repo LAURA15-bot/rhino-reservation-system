@@ -1,5 +1,18 @@
 // js/manage_users.js
 
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Load
     loadUsers();
@@ -140,22 +153,20 @@ function submitUserForm(e) {
         .then(res => {
             if(res.success) {
                 closeUserModal();
-                Swal.fire({
-                    icon: 'success', 
-                    title: 'Database Synced', 
-                    text: 'The workspace identity has been successfully updated.',
-                    timer: 2000, 
-                    showConfirmButton: false
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Workspace identity updated.'
                 });
                 loadUsers();
             } else {
-                Swal.fire('Update Failed', res.message, 'error');
+                Toast.fire({ icon: 'error', title: res.message });
             }
         })
-        .catch(() => Swal.fire('Network Error', 'Unable to reach the security manager API.', 'error'));
+        .catch(() => Swal.fire('Fatal Error', 'Unable to reach the security manager API.', 'error'));
 }
 
 function deleteUser(id) {
+    // We keep the heavy modal here because deleting a user requires confirmation
     Swal.fire({
         title: 'Revoke User Access?', 
         text: "This action cannot be undone and will be permanently logged.", 
@@ -174,12 +185,13 @@ function deleteUser(id) {
                 .then(r => r.json())
                 .then(res => {
                     if(res.success) {
-                        Swal.fire({icon: 'success', title: 'Access Revoked', timer: 1200, showConfirmButton: false});
+                        Toast.fire({ icon: 'success', title: 'Access Revoked' });
                         loadUsers();
                     } else {
-                        Swal.fire('Error', res.message, 'error');
+                        Toast.fire({ icon: 'error', title: res.message });
                     }
-                });
+                })
+                .catch(() => Swal.fire('Fatal Error', 'Unable to reach the security manager API.', 'error'));
         }
     });
 }

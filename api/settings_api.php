@@ -61,7 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
             'nav_dashboard_name', 'nav_dashboard_icon', 'nav_calendar_name', 'nav_calendar_icon',
             'nav_guest_name', 'nav_guest_icon', 'nav_alerts_name', 'nav_alerts_icon',
             'nav_rates_name', 'nav_rates_icon', 'nav_finance_name', 'nav_finance_icon',
-            'footer_text', 'theme_color', 'custom_primary', 'custom_secondary'
+            'footer_text', 'theme_color', 'custom_primary', 'custom_secondary',
+            'watermark_type', 'watermark_text'
         ];
 
         foreach ($allowed_keys as $key) {
@@ -79,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
         if ($path = handleLogoUpload('rack_footer_file')) $settings['rack_rates_footer_path'] = $path;
         if ($path = handleLogoUpload('receipt_header_file')) $settings['receipt_header_path'] = $path;
         if ($path = handleLogoUpload('receipt_footer_file')) $settings['receipt_footer_path'] = $path;
+        if ($path = handleLogoUpload('watermark_image_file')) $settings['watermark_image_path'] = $path;
 
         if (empty($settings)) {
             throw new Exception("No valid settings data was received.");

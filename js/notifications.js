@@ -1,5 +1,18 @@
 // js/notifications.js
 
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
 let globalNotificationsData = [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -114,11 +127,13 @@ function markFollowedUp(id) {
     .then(r => r.json())
     .then(data => {
         if(data.success) {
+            Toast.fire({ icon: 'success', title: 'Marked as Followed Up' });
             fetchNotifications(); 
         } else {
-            Swal.fire({ icon: 'error', title: 'Action Failed', text: data.message });
+            Toast.fire({ icon: 'error', title: data.message });
         }
-    });
+    })
+    .catch(() => Toast.fire({ icon: 'error', title: 'Network Error: Could not reach API.' }));
 }
 
 // ACTION: RESCHEDULE BOOKING
@@ -164,12 +179,13 @@ function rescheduleBooking(id, currentIn, currentOut) {
             .then(r => r.json())
             .then(data => {
                 if(data.success) {
-                    Swal.fire({ icon:'success', title:'Rescheduled!', text: 'Client marked as Followed Up.', timer:1500, showConfirmButton:false });
+                    Toast.fire({ icon: 'success', title: 'Rescheduled successfully' });
                     fetchNotifications();
                 } else {
-                    Swal.fire('Error', data.message, 'error');
+                    Toast.fire({ icon: 'error', title: data.message });
                 }
-            });
+            })
+            .catch(() => Toast.fire({ icon: 'error', title: 'Network Error: Could not reach API.' }));
         }
     });
 }
@@ -196,16 +212,17 @@ function cancelReservation(id) {
             .then(r => r.json())
             .then(data => {
                 if(data.success) { 
-                    Swal.fire({ icon: 'success', title: 'Cancelled!', text: 'Reservation has been soft-deleted.', timer: 1200, showConfirmButton: false }); 
+                    Toast.fire({ icon: 'success', title: 'Reservation Cancelled' });
                     fetchNotifications(); 
                     
                     if (typeof updateGlobalNotificationBadge === 'function') {
                         updateGlobalNotificationBadge();
                     }
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Access Denied', text: data.message });
+                    Toast.fire({ icon: 'error', title: 'Access Denied: ' + data.message });
                 }
-            });
+            })
+            .catch(() => Toast.fire({ icon: 'error', title: 'Network Error: Could not reach API.' }));
         }
     });
 }
