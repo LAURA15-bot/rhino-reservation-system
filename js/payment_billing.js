@@ -271,14 +271,10 @@ function closeDocumentModal() {
     backdrop.classList.add('hidden'); backdrop.classList.remove('flex');
 }
 
-// Clean rendering logic utilizing pre-calculated DOM layout
+// Clean rendering logic utilizing the reliable bounding box approach
 function processPDFGeneration(filename) {
     const element = document.getElementById('printable-document-area');
-    
-    // Bring the pre-rendered element into view for html2canvas
-    element.style.visibility = 'visible';
-    element.style.left = '0';
-    element.style.zIndex = '99999';
+    element.classList.remove('hidden');
 
     Swal.fire({
         title: 'Compiling PDF...',
@@ -288,44 +284,35 @@ function processPDFGeneration(filename) {
         didOpen: () => { Swal.showLoading() }
     });
 
-    html2pdf().set({ 
-        margin: 0.5, 
-        filename: filename, 
-        image: { type: 'jpeg', quality: 1.0 }, 
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            letterRendering: true, 
-            windowWidth: 800 
-        }, 
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
-    }).from(element).save().then(() => { 
-        
-        // Send the element back off-screen and hide it again
-        element.style.visibility = 'hidden';
-        element.style.left = '-9999px';
-        element.style.zIndex = '';
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Downloaded!',
-            text: 'Your PDF receipt has been saved successfully.',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => {
-            closeDocumentModal();
+    setTimeout(() => {
+        html2pdf().set({ 
+            margin: [0.5, 0.5, 0.5, 0.5], 
+            filename: filename, 
+            image: { type: 'jpeg', quality: 1.0 }, 
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                scrollY: 0 // Prevents scroll offset clipping
+            }, 
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
+        }).from(element).save().then(() => { 
+            element.classList.add('hidden');
+            Swal.fire({
+                icon: 'success',
+                title: 'Downloaded!',
+                text: 'Your PDF receipt has been saved successfully.',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                closeDocumentModal();
+            });
+        }).catch(err => {
+            console.error("PDF Generation Error: ", err);
+            element.classList.add('hidden'); 
+            Swal.fire('Error', 'Failed to compile the PDF document.', 'error');
         });
-        
-    }).catch(err => {
-        console.error("PDF Generation Error: ", err);
-        
-        // Failsafe cleanup
-        element.style.visibility = 'hidden';
-        element.style.left = '-9999px';
-        element.style.zIndex = '';
-        
-        Swal.fire('Error', 'Failed to compile the PDF document.', 'error');
-    });
+    }, 300);
 }
 
 function generatePDFReceipt() {

@@ -232,92 +232,103 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
         </div>
     </div>
 
-    <!-- PRINT AREA (Pre-rendered off-screen with visibility: hidden to load layout & images) -->
-    <div id="printable-document-area" class="bg-white px-10 py-8 w-[800px] max-w-none text-slate-800 font-sans text-sm" style="position: absolute; left: -9999px; top: 0; visibility: hidden;">
+    <!-- PRINT AREA (Pre-rendered via Tailwind hidden class to maintain DOM flow) -->
+    <div id="printable-document-area" class="hidden bg-white px-8 py-6 w-full max-w-2xl mx-auto text-slate-800 font-sans text-xs relative overflow-hidden">
         
-        <!-- Dynamic PDF Header Upload -->
-        <?php if (!empty($set['receipt_header_path'])): ?>
-            <div class="w-full text-center mb-8 border-b-2 border-slate-200 pb-6">
-                <img src="<?php echo htmlspecialchars($set['receipt_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-32 inline-block">
-            </div>
-        <?php else: ?>
-            <div class="text-center border-b-2 border-slate-200 pb-6 mb-8 space-y-1">
-                <h1 class="text-3xl font-black uppercase" style="color: <?php echo $primaryColor; ?>;"><?php echo htmlspecialchars($set['header_title']); ?></h1>
-            </div>
-        <?php endif; ?>
-
-        <!-- Document Title -->
-        <div class="text-center mb-8">
-            <h2 id="doc-title-badge" class="text-2xl font-black uppercase tracking-widest" style="color: <?php echo $primaryColor; ?>;">Official Receipt</h2>
+        <!-- Anti-Forgery Watermark -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            <span class="text-[65px] font-bold uppercase tracking-widest" style="color: rgba(148, 163, 184, 0.15); transform: rotate(-35deg); font-family: 'Times New Roman', Times, serif; white-space: nowrap;">
+                Rhino Tourist Camp
+            </span>
         </div>
-        
-        <!-- Booking Info Table (Safe for PDF engine) -->
-        <table class="w-full mb-8 border-collapse">
-            <tr>
-                <td class="w-1/2 align-top p-4 bg-slate-50 border border-slate-200 rounded-l-xl">
-                    <p class="text-slate-500 text-xs uppercase tracking-wider mb-1">Booking Ref</p>
-                    <p class="text-slate-900 font-black text-xl mb-3">#<span id="p-book-id"></span></p>
-                    <p class="text-slate-500 text-xs uppercase tracking-wider mb-1">Guest Name</p>
-                    <p class="text-slate-900 font-bold text-base"><span id="p-guest-name"></span></p>
-                </td>
-                <td class="w-1/2 align-top p-4 bg-slate-50 border border-slate-200 border-l-0 rounded-r-xl text-right">
-                    <p class="text-slate-500 text-xs uppercase tracking-wider mb-1">Check-in Date</p>
-                    <p class="text-slate-900 font-bold text-base mb-3"><span id="p-checkin"></span></p>
-                    <p class="text-slate-500 text-xs uppercase tracking-wider mb-1">Check-out Date</p>
-                    <p class="text-slate-900 font-bold text-base"><span id="p-checkout"></span></p>
-                </td>
-            </tr>
-        </table>
-        
-        <!-- Financial Ledger Table -->
-        <table class="w-full text-left border-collapse border border-slate-300 mb-8">
-            <thead>
-                <tr class="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider border-b-2 border-slate-400">
-                    <th class="p-4 border-r border-slate-300">Description</th>
-                    <th class="p-4 text-center border-r border-slate-300 w-24">Nights</th>
-                    <th class="p-4 text-right w-48">Amount (<span id="pdf-header-currency"></span>)</th>
-                </tr>
-            </thead>
-            <tbody class="text-sm">
-                <tr class="border-b border-slate-200">
-                    <td class="p-4 border-r border-slate-300" id="p-desc-room">Accommodation & Taxes</td>
-                    <td class="p-4 text-center border-r border-slate-300" id="p-nights-count">1</td>
-                    <td class="p-4 text-right font-mono" id="p-original-total">0.00</td>
-                </tr>
-                <tr id="tr-discount-row" class="text-rose-600 border-b border-slate-200 hidden bg-rose-50/30">
-                    <td class="p-4 border-r border-slate-300">Discount Applied</td>
-                    <td class="p-4 text-center border-r border-slate-300">-</td>
-                    <td class="p-4 text-right font-mono" id="p-discount-amount">0.00</td>
-                </tr>
-                <tr class="bg-slate-50 border-t-2 border-slate-400">
-                    <td class="p-4 font-bold text-slate-600 uppercase text-xs tracking-widest border-r border-slate-300">Total Billed</td>
-                    <td class="p-4 text-center border-r border-slate-300">-</td>
-                    <td class="p-4 text-right font-black font-mono text-base" id="p-total-amount">0.00</td>
-                </tr>
-                <tr class="bg-emerald-50/30">
-                    <td class="p-4 font-bold text-emerald-700 uppercase text-xs tracking-widest border-r border-slate-300 border-b border-slate-300">Total Paid</td>
-                    <td class="p-4 text-center border-r border-slate-300 border-b border-slate-300">-</td>
-                    <td class="p-4 text-right font-black font-mono text-emerald-700 text-base border-b border-slate-300" id="p-total-paid">0.00</td>
-                </tr>
-                <tr class="bg-rose-50/50 border-b-2 border-slate-400">
-                    <td class="p-4 font-bold text-rose-600 uppercase text-xs tracking-widest border-r border-slate-300">Balance Due</td>
-                    <td class="p-4 text-center border-r border-slate-300">-</td>
-                    <td class="p-4 text-right font-black font-mono text-rose-700 text-lg" id="p-balance-due">0.00</td>
-                </tr>
-            </tbody>
-        </table>
 
-        <!-- Dynamic PDF Footer Upload -->
-        <?php if (!empty($set['receipt_footer_path'])): ?>
-            <div class="w-full text-center mt-8 pt-4 border-t-2 border-slate-200">
-                <img src="<?php echo htmlspecialchars($set['receipt_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-24 inline-block">
-            </div>
-        <?php else: ?>
-            <div class="text-center mt-12 pt-6 border-t-2 border-slate-200">
-                <p class="text-xs font-bold text-slate-500 tracking-widest uppercase">THANK YOU FOR CHOOSING <?php echo htmlspecialchars($set['sidebar_title']); ?></p>
-            </div>
-        <?php endif; ?>
+        <!-- Content Wrapper (Keeps text above the watermark) -->
+        <div class="relative z-10">
+            
+            <!-- Dynamic PDF Header Upload -->
+            <?php if (!empty($set['receipt_header_path'])): ?>
+                <div class="w-full text-center mb-6 border-b-2 border-slate-200 pb-4">
+                    <img src="<?php echo htmlspecialchars($set['receipt_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-28 inline-block">
+                </div>
+            <?php else: ?>
+                <div class="text-center border-b-2 border-slate-200 pb-4 mb-6 space-y-1">
+                    <h1 class="text-3xl font-bold uppercase text-black" style="font-family: 'Times New Roman', Times, serif;"><?php echo htmlspecialchars($set['header_title']); ?></h1>
+                </div>
+            <?php endif; ?>
 
+            <!-- Document Title -->
+            <div class="text-center mb-6">
+                <h2 id="doc-title-badge" class="text-2xl font-bold uppercase tracking-widest text-black" style="font-family: 'Times New Roman', Times, serif;">Official Receipt</h2>
+            </div>
+            
+            <!-- Booking Info Table -->
+            <table class="w-full mb-6 border-collapse">
+                <tr>
+                    <td class="w-1/2 align-top p-3 bg-slate-50 border border-slate-200 rounded-l-xl">
+                        <p class="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">Booking Ref</p>
+                        <p class="text-slate-900 font-black text-lg mb-2">#<span id="p-book-id"></span></p>
+                        <p class="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">Guest Name</p>
+                        <p class="text-slate-900 font-bold text-sm"><span id="p-guest-name"></span></p>
+                    </td>
+                    <td class="w-1/2 align-top p-3 bg-slate-50 border border-slate-200 border-l-0 rounded-r-xl text-right">
+                        <p class="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">Check-in Date</p>
+                        <p class="text-slate-900 font-bold text-sm mb-2"><span id="p-checkin"></span></p>
+                        <p class="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">Check-out Date</p>
+                        <p class="text-slate-900 font-bold text-sm"><span id="p-checkout"></span></p>
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- Financial Ledger Table -->
+            <table class="w-full text-left border-collapse border border-slate-300 mb-6">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider border-b-2 border-slate-400">
+                        <th class="p-3 border-r border-slate-300">Description</th>
+                        <th class="p-3 text-center border-r border-slate-300 w-20">Nights</th>
+                        <th class="p-3 text-right w-40">Amount (<span id="pdf-header-currency"></span>)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs">
+                    <tr class="border-b border-slate-200">
+                        <td class="p-3 border-r border-slate-300" id="p-desc-room">Accommodation & Taxes</td>
+                        <td class="p-3 text-center border-r border-slate-300" id="p-nights-count">1</td>
+                        <td class="p-3 text-right font-mono font-bold" id="p-original-total">0.00</td>
+                    </tr>
+                    <tr id="tr-discount-row" class="text-rose-600 border-b border-slate-200 hidden bg-rose-50/30">
+                        <td class="p-3 border-r border-slate-300 font-bold">Discount Applied</td>
+                        <td class="p-3 text-center border-r border-slate-300 font-bold">-</td>
+                        <td class="p-3 text-right font-mono font-bold" id="p-discount-amount">0.00</td>
+                    </tr>
+                    <tr class="bg-slate-50 border-t-2 border-slate-400">
+                        <td class="p-3 font-bold text-slate-600 uppercase text-[10px] tracking-widest border-r border-slate-300">Total Billed</td>
+                        <td class="p-3 text-center border-r border-slate-300">-</td>
+                        <td class="p-3 text-right font-black font-mono text-sm" id="p-total-amount">0.00</td>
+                    </tr>
+                    <tr class="bg-emerald-50/30">
+                        <td class="p-3 font-bold text-emerald-700 uppercase text-[10px] tracking-widest border-r border-slate-300 border-b border-slate-300">Total Paid</td>
+                        <td class="p-3 text-center border-r border-slate-300 border-b border-slate-300">-</td>
+                        <td class="p-3 text-right font-black font-mono text-emerald-700 text-sm border-b border-slate-300" id="p-total-paid">0.00</td>
+                    </tr>
+                    <tr class="bg-rose-50/50 border-b-2 border-slate-400">
+                        <td class="p-3 font-bold text-rose-600 uppercase text-[10px] tracking-widest border-r border-slate-300">Balance Due</td>
+                        <td class="p-3 text-center border-r border-slate-300">-</td>
+                        <td class="p-3 text-right font-black font-mono text-rose-700 text-base" id="p-balance-due">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Dynamic PDF Footer Upload -->
+            <?php if (!empty($set['receipt_footer_path'])): ?>
+                <div class="w-full text-center mt-6 pt-3 border-t-2 border-slate-200">
+                    <img src="<?php echo htmlspecialchars($set['receipt_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-20 inline-block">
+                </div>
+            <?php else: ?>
+                <div class="text-center mt-8 pt-4 border-t-2 border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">THANK YOU FOR CHOOSING <?php echo htmlspecialchars($set['sidebar_title']); ?></p>
+                </div>
+            <?php endif; ?>
+
+        </div>
     </div>
 </body>
 </html>
