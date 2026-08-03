@@ -14,9 +14,18 @@ if (!isset($_SESSION['logged_in'])) {
 require '../Includes/database.php';
 header('Content-Type: application/json');
 
+$allow_retroactive = false;
+try {
+    $stmtSet = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'allow_retroactive_bookings'");
+    if ($stmtSet->fetchColumn() === '1') $allow_retroactive = true;
+} catch(Exception $e) {}
+
 // Auto-Maintenance Routine
 try {
-    $pdo->exec("UPDATE reservations SET status = 'Checked Out' WHERE status = 'Booked' AND check_out < CURDATE()");
+    if (!$allow_retroactive) {
+        $pdo->exec("UPDATE reservations SET status = 'Cancelled' WHERE status = 'Reserved' AND check_in < CURDATE() AND payment_status IN ('Outstanding', 'Pending', '') AND is_historical = 0");
+    }
+    $pdo->exec("UPDATE reservations SET status = 'Checked Out' WHERE status IN ('Booked', 'Reserved') AND check_out < CURDATE() AND status != 'Cancelled'");
 } catch (PDOException $e) {}
 
 // Unified Pricing Engine
@@ -110,13 +119,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['record_payment'])) {
             throw new Exception("A reference or transaction number is required for M-Pesa and Bank Transfer payments.");
         }
 
+        // Enforce Unique Reference Validation
+        if (!empty($reference_no)) {
+            $refCheck = $pdo->prepare("SELECT id FROM payments WHERE reference_no = ?");
+            $refCheck->execute([$reference_no]);
+            if ($refCheck->fetch()) {
+                throw new Exception("Duplicate Error: The transaction reference '{$reference_no}' has already been used in the ledger.");
+            }
+        }
+
         $bStmt = $pdo->prepare("SELECT * FROM reservations WHERE id = ?");
         $bStmt->execute([$booking_id]);
         $booking = $bStmt->fetch();
 
+        if (!empty($reference_no)) {
+            $refCheck = $pdo->prepare("SELECT id FROM payments WHERE reference_no = ?");
+            $refCheck->execute([$reference_no]);
+            if ($refCheck->fetch()) {
+                throw new Exception("Transaction reference '{$reference_no}' already exists in the system.");
+            }
+        }
+
         if (!$booking) throw new Exception("Invalid booking target reference.");
 
-        if ($booking['status'] === 'Reserved' && $booking['check_in'] < date('Y-m-d')) {
+        if ($booking['status'] === 'Reserved' && $booking['check_in'] < date('Y-m-d') && $booking['is_historical'] == 0) {
             throw new Exception("Booking hold has expired. The check-in date must be edited to a valid future date before accepting payment.");
         }
 
@@ -165,9 +191,10 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['acti
     try {
         $search_query = trim($_GET['search'] ?? '');
 
+        // Fetch all records including cancelled ones so we can evaluate status explicitly on the frontend
         $sql = "SELECT r.*, 
                 (SELECT COALESCE(SUM(p.amount_paid), 0) FROM payments p WHERE p.booking_id = r.id AND p.currency = CASE WHEN LOWER(COALESCE(r.guest_type, 'resident')) = 'resident' THEN 'KES' ELSE 'USD' END) as actual_paid
-                FROM reservations r WHERE r.status != 'Cancelled'";
+                FROM reservations r WHERE 1=1";
         $params = [];
 
         if (!empty($search_query)) {
@@ -208,7 +235,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['acti
             }
 
             $status = $res['payment_status'] ?? ($bal <= 0 ? 'Paid in Full' : ($paid > 0 ? 'Partially Paid' : 'Outstanding'));
-            if ($res['status'] === 'Checked Out' && $status === 'Paid in Full') {
+            if ($res['status'] === 'Cancelled') {
+                $status = 'Cancelled';
+            } elseif ($res['status'] === 'Checked Out' && $status === 'Paid in Full') {
                 $status = 'Checked Out';
             }
 
@@ -221,7 +250,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['acti
                 'paid' => $paid,
                 'balance' => $bal,
                 'computedStatus' => $status,
-                'isPastDue' => ($res['status'] === 'Reserved' && $res['check_in'] < date('Y-m-d'))
+                'isPastDue' => ($res['status'] === 'Reserved' && $res['check_in'] < date('Y-m-d') && $res['is_historical'] == 0)
             ];
         }
 

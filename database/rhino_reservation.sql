@@ -1,5 +1,5 @@
 -- Fresh Database Schema for Rhino Tourist Camp Production Handoff
--- Includes structural upgrades and zero-transaction isolation.
+-- Includes structural upgrades, retroactive migration flags, and zero-transaction isolation.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -56,6 +56,7 @@ CREATE TABLE `reservations` (
   `discount` decimal(10,2) DEFAULT 0.00,
   `special_requests` text DEFAULT NULL,
   `is_followed_up` tinyint(1) NOT NULL DEFAULT 0,
+  `is_historical` tinyint(1) DEFAULT 0 COMMENT '1 = manually backdated record, bypasses auto-cancellation',
   PRIMARY KEY (`id`),
   KEY `idx_number_of_adults` (`number_of_adults`),
   KEY `idx_number_of_children` (`number_of_children`),
@@ -233,6 +234,7 @@ CREATE TABLE `system_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES
+('allow_retroactive_bookings', '0'),
 ('custom_primary', '#046a38'),
 ('custom_secondary', '#10b981'),
 ('footer_text', '© 2026 RHINO TOURIST CAMP. ALL RIGHTS RESERVED.'),

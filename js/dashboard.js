@@ -7,8 +7,20 @@ let CAMP_INVENTORY_METRICS = {};
 let reservationsDatabase = [];
 let activeSelectedSourceMode = 'direct';
 
-// Fetch the dynamically injected PHP theme color for JS manipulation
 const primaryThemeColor = document.body.dataset.primaryColor || '#046a38';
+
+// Initialize Top-Right Toast Notifications
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
 
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -136,8 +148,10 @@ function toggleReferenceField() {
 function submitPaymentViaAjax(e) {
     e.preventDefault();
     const amt = parseFloat(document.getElementById('input-amount-paid').value);
+    
+    // Soft validation Toast
     if (amt <= 0) {
-        Swal.fire({ icon: 'error', title: 'Invalid Amount', text: 'Payment amount must be greater than zero.' });
+        Toast.fire({ icon: 'warning', title: 'Invalid Amount. Payment must be greater than zero.' });
         return;
     }
 
@@ -149,11 +163,10 @@ function submitPaymentViaAjax(e) {
     .then(data => {
         if(data.success) {
             closePaymentModal();
-            Swal.fire({ icon: 'success', title: 'Payment Recorded!', text: 'The booking has been successfully confirmed.', timer: 1500, showConfirmButton: false })
-            .then(() => {
-                loadDashboardData(document.getElementById('global-manifest-datepicker').value); 
-            });
+            Toast.fire({ icon: 'success', title: 'Payment successfully recorded.' });
+            loadDashboardData(document.getElementById('global-manifest-datepicker').value); 
         } else {
+            // Critical Backend Error gets the full SweetAlert
             Swal.fire({ icon: 'error', title: 'Payment Failed', text: data.message });
         }
     })
@@ -289,8 +302,14 @@ function addNewAllocationRowRow(data = null) {
     const targetRowId = 'row-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     const outerDiv = document.createElement('div');
     
+    // Security validation to check if the Date Picker should be locked
     const isEditing = document.getElementById('editing-target-reservation-id').value !== "";
-    const minDateAttr = !isEditing ? `min="${SERVER_TODAY}"` : '';
+    let minDateAttr = '';
+    
+    // Check global permission constant injected by PHP
+    if (!isEditing && !CAN_BACKDATE) {
+        minDateAttr = `min="${SERVER_TODAY}"`;
+    }
     
     let hasReqChecked = (data && data.specialRequests && data.specialRequests.trim() !== '') ? 'checked' : '';
     let reqHidden = hasReqChecked ? '' : 'hidden';
@@ -359,7 +378,6 @@ function addNewAllocationRowRow(data = null) {
             
             <div class="flex items-end pb-1.5 gap-4">
                 <label class="flex items-center gap-1.5 cursor-pointer pl-1">
-                    <!-- Checkbox takes dynamic color via inline accent-color style -->
                     <input type="checkbox" class="alloc-under-12 w-3 h-3 bg-slate-50 dark:bg-slate-800 rounded border-slate-300 dark:border-slate-600" style="accent-color: ${primaryThemeColor};" ${(!data || data.under12) ? 'checked' : ''}>
                     <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase">Under 12 Yrs?</span>
                 </label>
@@ -416,20 +434,21 @@ function processAndValidateFormSubmission() {
     if(nodes.length === 0) return;
 
     let allocations = [];
-    let isValid = true;
+    let hasEmptyFields = false;
+    let hasInvalidDate = false;
     let redirectDate = '';
     const todayDate = new Date(SERVER_TODAY);
     const editId = document.getElementById('editing-target-reservation-id').value;
 
     if (activeSelectedSourceMode === 'agency') {
-        if (!validateField(document.getElementById('input-agency-name'))) isValid = false;
-        if (!validateField(document.getElementById('input-booking-officer'))) isValid = false;
+        if (!validateField(document.getElementById('input-agency-name'))) hasEmptyFields = true;
+        if (!validateField(document.getElementById('input-booking-officer'))) hasEmptyFields = true;
     }
 
     nodes.forEach((node, index) => {
         const reqInputs = node.querySelectorAll('input[required], select[required], textarea[required]');
         reqInputs.forEach(inp => {
-            if (!validateField(inp)) isValid = false;
+            if (!validateField(inp)) hasEmptyFields = true;
         });
 
         const clientNames = node.querySelector('.alloc-client-names').value.trim();
@@ -448,14 +467,14 @@ function processAndValidateFormSubmission() {
         const hasRequests = node.querySelector('.alloc-has-requests').checked;
         const specialRequests = hasRequests ? node.querySelector('.alloc-special-requests').value.trim() : '';
         
+        // Security validation flag logic
         if (!editId && new Date(checkIn) < todayDate) {
-            Swal.fire({ icon: 'error', title: 'Invalid Check-in Date', text: 'You cannot book a room for a date in the past.' });
-            isValid = false;
-            
-            const dateInp = node.querySelector('.alloc-checkin-date');
-            dateInp.classList.remove('border-slate-200', 'dark:border-slate-600', 'border-emerald-500');
-            dateInp.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
-            return;
+            if (!CAN_BACKDATE) {
+                hasInvalidDate = true;
+                const dateInp = node.querySelector('.alloc-checkin-date');
+                dateInp.classList.remove('border-slate-200', 'dark:border-slate-600', 'border-emerald-500');
+                dateInp.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+            }
         }
 
         if (index === 0) redirectDate = checkIn;
@@ -484,8 +503,14 @@ function processAndValidateFormSubmission() {
         });
     });
 
-    if(!isValid) {
-        Swal.fire({ icon: 'error', title: 'Missing Fields', text: 'Please fill in all required fields highlighted in red, including any marked special requests.' });
+    // Explicit Soft Alerts
+    if (hasInvalidDate) {
+        Toast.fire({ icon: 'warning', title: 'Cannot book past dates. Please select a valid date.' });
+        return; 
+    }
+
+    if (hasEmptyFields) {
+        Toast.fire({ icon: 'warning', title: 'Missing required fields. Check highlighted inputs.' });
         return; 
     }
 
@@ -510,9 +535,8 @@ function processAndValidateFormSubmission() {
     .then(data => {
         if(data.success) {
             closeReservationModal();
-            Swal.fire({ icon: 'success', title: 'Saved!', text: 'Reservation successfully saved to database.', timer: 1200, showConfirmButton: false }).then(() => { 
-                loadDashboardData(redirectDate); 
-            });
+            Toast.fire({ icon: 'success', title: 'Reservation successfully saved.' });
+            loadDashboardData(redirectDate); 
         } else {
             Swal.fire({ icon: 'error', title: 'Action Denied', text: data.message });
         }
@@ -530,7 +554,7 @@ function deleteReservationRecord(id) {
             .then(data => {
                 if(data.success) { 
                     reservationsDatabase = reservationsDatabase.filter(r => r.id !== String(id)); 
-                    Swal.fire({ icon: 'success', title: 'Cancelled!', text: 'Reservation has been soft-deleted.', timer: 1000, showConfirmButton: false }); 
+                    Toast.fire({ icon: 'success', title: 'Reservation cancelled.' }); 
                     syncSelectedManifestToDate(document.getElementById('global-manifest-datepicker').value); 
                 }
             });
@@ -596,7 +620,8 @@ function syncSelectedManifestToDate(targetDateStr) {
                         let isPastDue = (alloc.checkIn < SERVER_TODAY);
                         let confirmBtnHtml = '';
                         
-                        if (isPastDue) {
+                        // Check if it's expired based on the backdate permission and historical flag
+                        if (isPastDue && !CAN_BACKDATE && res.isHistorical === 0) {
                             confirmBtnHtml = `<span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 rounded font-bold text-[10px] uppercase mr-1" title="Check-in date has passed. Edit dates or cancel.">Expired Hold</span>`;
                         } else {
                             confirmBtnHtml = `<button onclick="openPaymentModalFromId('${res.id}')" class="px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded font-bold text-[10px] transition" title="Submit Payment to Confirm">Confirm</button>`;

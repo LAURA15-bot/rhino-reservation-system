@@ -8,7 +8,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
 require_once 'Includes/load_settings.php';
 $set = $GLOBALS['system_settings'];
 
-// Extract Theme Color so we can apply it to the Settings Page Buttons
 $theme = $set['theme_color'] ?? 'emerald';
 $primaryColor = '#046a38'; 
 if ($theme === 'safari') $primaryColor = '#8B3C28';
@@ -27,8 +26,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Version bumped to clear cache -->
-    <script src="js/settings.js?v=7" defer></script>
+    <script src="js/settings.js?v=9" defer></script>
     
     <style>
         :root {
@@ -61,14 +59,13 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                         <i class="fa-solid fa-sliders text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-base font-black tracking-widest text-slate-900 dark:text-white uppercase">Control Center & Branding</h1>
-                        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Manage live website text, company logo assets, and visual themes</p>
+                        <h1 class="text-base font-black tracking-widest text-slate-900 dark:text-white uppercase">Control Center & Settings</h1>
+                        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Manage live website text, company branding, and system protocols</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     
-                    <!-- Left Tab Navigation -->
                     <div class="lg:col-span-1 space-y-2">
                         <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 space-y-1">
                             <button onclick="switchSettingsTab('tab-sidebar', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-white shadow-sm" style="background-color: <?php echo $primaryColor; ?>;">
@@ -86,16 +83,17 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                             <button onclick="switchSettingsTab('tab-footer', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <i class="fa-solid fa-shoe-prints w-4 text-center"></i> Footer Credentials
                             </button>
+                            <div class="border-t border-slate-100 dark:border-slate-700 my-2"></div>
+                            <button onclick="switchSettingsTab('tab-operations', this)" class="settings-tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <i class="fa-solid fa-shield-halved w-4 text-center"></i> System Operations
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Main Forms Area -->
                     <div class="lg:col-span-3 relative pb-20">
                         
                         <!-- TAB 1: SIDEBAR CONFIGURATION -->
                         <div id="tab-sidebar" class="settings-content-section space-y-4">
-                            
-                            <!-- Accordion 1: Sidebar Brand Assets -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-sidebar-brand', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -107,7 +105,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div id="acc-sidebar-brand" class="block">
                                     <form onsubmit="event.preventDefault(); saveSection('Sidebar Brand', this);">
                                         <div class="p-6 space-y-6">
-                                            <!-- Radio Buttons -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Brand Display Mode</label>
                                                 <div class="flex gap-4">
@@ -122,7 +119,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                 </div>
                                             </div>
 
-                                            <!-- The Dynamic Icon Input Box -->
                                             <div id="wrapper_sidebar_icon" class="<?php echo $set['sidebar_display_type'] === 'logo' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Sidebar Icon Class</label>
                                                 <div class="flex items-center gap-3">
@@ -133,7 +129,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                 </div>
                                             </div>
 
-                                            <!-- The Dynamic Logo Upload Box -->
                                             <div id="wrapper_sidebar_logo" class="<?php echo $set['sidebar_display_type'] === 'icon' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Sidebar Logo</label>
                                                 <?php if (!empty($set['logo_path'])): ?>
@@ -162,7 +157,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                             </div>
 
-                            <!-- Accordion 2: Sidebar Typography -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-sidebar-text', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -194,7 +188,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                             </div>
 
-                            <!-- Accordion 3: Navigation Menu Links -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-sidebar-links', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -244,7 +237,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
 
                         <!-- TAB 2: GLOBAL HEADER CONFIGURATION -->
                         <div id="tab-header" class="settings-content-section space-y-4 hidden">
-                            <!-- Accordion: Header Brand Assets -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-header-brand', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -256,7 +248,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div id="acc-header-brand" class="block">
                                     <form onsubmit="event.preventDefault(); saveSection('Header Brand', this);">
                                         <div class="p-6 space-y-6">
-                                            <!-- Radio Buttons -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Header Display Mode</label>
                                                 <div class="flex gap-4">
@@ -271,7 +262,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                 </div>
                                             </div>
 
-                                            <!-- The Dynamic Icon Input Box -->
                                             <div id="wrapper_header_icon" class="<?php echo $set['header_display_type'] === 'logo' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Header Icon Class</label>
                                                 <div class="flex items-center gap-3">
@@ -282,7 +272,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                 </div>
                                             </div>
 
-                                            <!-- The Dynamic Logo Upload Box -->
                                             <div id="wrapper_header_logo" class="<?php echo $set['header_display_type'] === 'icon' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Image</label>
                                                 <?php if (!empty($set['header_logo_path'])): ?>
@@ -310,7 +299,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                             </div>
 
-                            <!-- Accordion: Header Typography -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-header-text', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -344,10 +332,8 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                             </div>
                         </div>
 
-                        <!-- NEW TAB: PDF & PRINT LAYOUTS -->
+                        <!-- TAB 3: PDF & PRINT LAYOUTS -->
                         <div id="tab-layouts" class="settings-content-section space-y-4 hidden">
-                            
-                            <!-- Accordion: Rack Rates Documents -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-rack-rates', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -359,8 +345,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div id="acc-rack-rates" class="block">
                                     <form onsubmit="event.preventDefault(); saveSection('Rack Rates PDF Layout', this);">
                                         <div class="p-6 space-y-6">
-                                            
-                                            <!-- Rack Rates Header Graphic -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Graphic (Optional)</label>
                                                 <?php if (!empty($set['rack_rates_header_path'])): ?>
@@ -378,8 +362,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     <input id="rack-header-dropzone" type="file" name="rack_header_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'rack-header-file-name')" />
                                                 </label>
                                             </div>
-
-                                            <!-- Rack Rates Footer Graphic -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Footer Graphic (Optional)</label>
                                                 <?php if (!empty($set['rack_rates_footer_path'])): ?>
@@ -397,7 +379,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     <input id="rack-footer-dropzone" type="file" name="rack_footer_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'rack-footer-file-name')" />
                                                 </label>
                                             </div>
-                                            
                                             <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
                                                 <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
                                                     <i class="fa-solid fa-check"></i> Update Rack Rates PDF Settings
@@ -408,7 +389,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                             </div>
 
-                            <!-- Accordion: Receipts Documents -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
                                 <button onclick="toggleAccordion('acc-receipts', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -420,8 +400,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div id="acc-receipts" class="hidden">
                                     <form onsubmit="event.preventDefault(); saveSection('Receipt PDF Layout', this);">
                                         <div class="p-6 space-y-6">
-                                            
-                                            <!-- Receipt Header Graphic -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Header Graphic (Optional)</label>
                                                 <?php if (!empty($set['receipt_header_path'])): ?>
@@ -439,8 +417,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     <input id="receipt-header-dropzone" type="file" name="receipt_header_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'receipt-header-file-name')" />
                                                 </label>
                                             </div>
-
-                                            <!-- Receipt Footer Graphic -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Footer Graphic (Optional)</label>
                                                 <?php if (!empty($set['receipt_footer_path'])): ?>
@@ -458,7 +434,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     <input id="receipt-footer-dropzone" type="file" name="receipt_footer_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'receipt-footer-file-name')" />
                                                 </label>
                                             </div>
-                                            
                                             <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
                                                 <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
                                                     <i class="fa-solid fa-check"></i> Update Receipt PDF Settings
@@ -469,7 +444,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                             </div>
                             
-                            <!-- Accordion: Document Watermark Settings -->
                             <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden mt-4">
                                 <button onclick="toggleAccordion('acc-watermark', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
                                     <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -481,8 +455,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 <div id="acc-watermark" class="hidden">
                                     <form onsubmit="event.preventDefault(); saveSection('Document Watermark', this);">
                                         <div class="p-6 space-y-6">
-                                            
-                                            <!-- Watermark Type Selector -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Watermark Type</label>
                                                 <div class="flex gap-4">
@@ -496,15 +468,11 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     </label>
                                                 </div>
                                             </div>
-
-                                            <!-- Text Watermark Input -->
                                             <div id="wrapper_watermark_text" class="<?php echo ($set['watermark_type'] ?? 'text') === 'image' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Watermark Text</label>
                                                 <input type="text" name="watermark_text" value="<?php echo htmlspecialchars($set['watermark_text'] ?? 'Rhino Tourist Camp'); ?>" class="theme-focus w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl p-3 text-sm font-bold transition-colors">
                                                 <p class="text-[9px] text-slate-400 mt-2 italic">This text will be scaled and rotated diagonally in the background of your PDFs.</p>
                                             </div>
-
-                                            <!-- Image Watermark Upload -->
                                             <div id="wrapper_watermark_image" class="<?php echo ($set['watermark_type'] ?? 'text') === 'text' ? 'hidden' : ''; ?> pt-2">
                                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Upload Watermark Image</label>
                                                 <?php if (!empty($set['watermark_image_path'])): ?>
@@ -522,7 +490,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                                     <input id="watermark-dropzone" type="file" name="watermark_image_file" class="hidden" accept=".png, .jpg, .jpeg, .webp" onchange="displayFileName(this, 'watermark-file-name')" />
                                                 </label>
                                             </div>
-                                            
                                             <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
                                                 <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
                                                     <i class="fa-solid fa-check"></i> Save Watermark Settings
@@ -544,38 +511,32 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                 </div>
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4 border-b border-slate-100 dark:border-slate-700 pb-6 mb-6">
-                                        
                                         <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'safari' ? 'border-[#8B3C28] bg-amber-50/50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('safari')">
                                             <input type="radio" name="theme_color" value="safari" <?php echo $set['theme_color'] === 'safari' ? 'checked' : ''; ?> class="hidden">
                                             <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#8B3C28] shadow"></div><div class="w-6 h-6 rounded-full bg-[#E6C556] shadow"></div></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Rhino Safari<br><span class="font-normal text-[9px] text-slate-400">Terracotta & Gold</span></span>
                                         </label>
-
                                         <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'kairi' ? 'border-[#802b1f] bg-red-50/50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('kairi')">
                                             <input type="radio" name="theme_color" value="kairi" <?php echo $set['theme_color'] === 'kairi' ? 'checked' : ''; ?> class="hidden">
                                             <div class="flex gap-1"><div class="w-6 h-6 rounded-full bg-[#802b1f] shadow"></div><div class="w-6 h-6 rounded-full bg-[#e6b800] shadow"></div></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Kairi Tours<br><span class="font-normal text-[9px] text-slate-400">Burgundy & Gold</span></span>
                                         </label>
-
                                         <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'emerald' ? 'border-[#046a38] bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('emerald')">
                                             <input type="radio" name="theme_color" value="emerald" <?php echo $set['theme_color'] === 'emerald' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[#046a38] shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Forest Emerald<br><span class="font-normal text-[9px] text-slate-400">Classic Green</span></span>
                                         </label>
-
                                         <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'blue' ? 'border-[#2563eb] bg-blue-50/50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(false); selectThemeUI('blue')">
                                             <input type="radio" name="theme_color" value="blue" <?php echo $set['theme_color'] === 'blue' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[#2563eb] shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Ocean Blue<br><span class="font-normal text-[9px] text-slate-400">Standard Blue</span></span>
                                         </label>
-
                                         <label class="theme-option-label cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all <?php echo $set['theme_color'] === 'custom' ? 'border-slate-800 dark:border-slate-400 bg-slate-100 dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'; ?>" onclick="toggleCustomHexFields(true); selectThemeUI('custom')">
                                             <input type="radio" name="theme_color" value="custom" <?php echo $set['theme_color'] === 'custom' ? 'checked' : ''; ?> class="hidden">
                                             <div class="w-6 h-6 rounded-full bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-red-500 via-purple-500 to-blue-500 shadow"></div>
                                             <span class="text-xs font-bold text-slate-800 dark:text-white">Custom HEX<br><span class="font-normal text-[9px] text-slate-400">Mix your own</span></span>
                                         </label>
                                     </div>
-
                                     <div id="wrapper_custom_colors" class="p-5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 <?php echo $set['theme_color'] === 'custom' ? '' : 'hidden'; ?>">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
@@ -588,7 +549,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                             </div>
                                         </div>
                                     </div>
-
                                     <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
                                         <i class="fa-solid fa-check"></i> Apply Selected Theme
                                     </button>
@@ -615,6 +575,66 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                                     </button>
                                 </div>
                             </form>
+                        </div>
+
+                        <!-- NEW TAB 6: SYSTEM OPERATIONS -->
+                        <div id="tab-operations" class="settings-content-section space-y-4 hidden">
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                <button onclick="toggleAccordion('acc-retroactive', this)" class="w-full px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700 outline-none">
+                                    <h2 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-clock-rotate-left text-rose-500"></i> Retroactive Data Entry
+                                    </h2>
+                                    <i class="fa-solid fa-chevron-up text-slate-400 text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div id="acc-retroactive" class="block">
+                                    <form onsubmit="event.preventDefault(); saveSection('System Operations', this);">
+                                        <div class="p-6 space-y-6">
+                                            
+                                            <!-- NEW: 3-Tier Access Control -->
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Consultant Backdating Permission</label>
+                                                <div class="flex flex-col gap-3">
+                                                    
+                                                    <!-- Option 0: Locked -->
+                                                    <label class="flex items-center gap-3 cursor-pointer p-4 border <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '0' ? 'border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-800/80' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'; ?> rounded-xl transition-colors">
+                                                        <input type="radio" name="allow_retroactive_bookings" value="0" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '0' ? 'checked' : ''; ?>>
+                                                        <div>
+                                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 block"><i class="fa-solid fa-lock text-slate-400 mr-1"></i> Locked (Recommended)</span>
+                                                            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">No one can backdate bookings. Strict chronological integrity enforced.</span>
+                                                        </div>
+                                                    </label>
+                                                    
+                                                    <!-- Option 1: Admins Only -->
+                                                    <label class="flex items-center gap-3 cursor-pointer p-4 border <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '1' ? 'border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/10'; ?> rounded-xl transition-colors">
+                                                        <input type="radio" name="allow_retroactive_bookings" value="1" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '1' ? 'checked' : ''; ?>>
+                                                        <div>
+                                                            <span class="text-sm font-bold text-blue-700 dark:text-blue-400 block"><i class="fa-solid fa-user-shield text-blue-500 mr-1"></i> Unlocked for Admins</span>
+                                                            <span class="text-[10px] text-blue-600 dark:text-blue-500/80 font-medium">Only System Administrators can bypass the date lock. Consultants remain restricted.</span>
+                                                        </div>
+                                                    </label>
+
+                                                    <!-- Option 2: Everyone -->
+                                                    <label class="flex items-center gap-3 cursor-pointer p-4 border <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '2' ? 'border-rose-300 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20' : 'border-slate-200 dark:border-slate-700 hover:bg-rose-50/30 dark:hover:bg-rose-900/10'; ?> rounded-xl transition-colors">
+                                                        <input type="radio" name="allow_retroactive_bookings" value="2" class="w-4 h-4" style="accent-color: <?php echo $primaryColor; ?>;" <?php echo ($set['allow_retroactive_bookings'] ?? '0') === '2' ? 'checked' : ''; ?>>
+                                                        <div>
+                                                            <span class="text-sm font-bold text-rose-700 dark:text-rose-400 block"><i class="fa-solid fa-unlock-keyhole text-rose-500 mr-1"></i> Unlocked for Everyone (Migration Mode)</span>
+                                                            <span class="text-[10px] text-rose-600 dark:text-rose-500/80 font-medium">All users (including Consultants) can retroactively log historical data.</span>
+                                                        </div>
+                                                    </label>
+
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
+                                                <button type="submit" class="w-full theme-btn text-white font-bold py-3 px-6 rounded-xl text-xs shadow-md transition flex justify-center items-center gap-2" style="background-color: <?php echo $primaryColor; ?>;">
+                                                    <i class="fa-solid fa-check"></i> Update Security Protocols
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
 
                     </div>

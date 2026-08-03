@@ -7,11 +7,19 @@ if (session_status() === PHP_SESSION_NONE) {
 require '../Includes/database.php';
 header('Content-Type: application/json');
 
+// Global System Security & Protocol Fetch
+$retro_setting = '0';
+try {
+    $stmtSet = $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key = 'allow_retroactive_bookings'");
+    $retro_setting = $stmtSet->fetchColumn() ?: '0';
+} catch(Exception $e) {}
+
 // ==============================================================================
 // SYSTEM AUTO-MAINTENANCE ROUTINE
 // ==============================================================================
 try {
-    $pdo->exec("UPDATE reservations SET status = 'Cancelled' WHERE status = 'Reserved' AND check_in < CURDATE() AND payment_status IN ('Outstanding', 'Pending', '')");
+    // Only clear out expired holds if the record is NOT a protected historical entry
+    $pdo->exec("UPDATE reservations SET status = 'Cancelled' WHERE status = 'Reserved' AND check_in < CURDATE() AND payment_status IN ('Outstanding', 'Pending', '') AND is_historical = 0");
     $pdo->exec("UPDATE reservations SET status = 'Checked Out' WHERE status IN ('Booked', 'Reserved') AND check_out < CURDATE() AND status != 'Cancelled'");
 } catch (PDOException $e) { }
 
@@ -111,7 +119,6 @@ if (!function_exists('getBookingPricingData')) {
 // ==============================================================================
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    // 1. CREATE OR UPDATE RESERVATION
     if (isset($_POST['ajax_add_reservation_batch']) || isset($_POST['ajax_edit_reservation_batch'])) {
         try {
             $isEdit = isset($_POST['ajax_edit_reservation_batch']);
@@ -124,7 +131,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $allocations = json_decode($_POST['allocations'], true);
             $status = 'Reserved';
 
-            // DYNAMIC ROOM INVENTORY FETCH
             $invStmt = $pdo->query("SELECT type, total_inventory FROM rooms");
             $inventory_limits = [];
             while($r = $invStmt->fetch(PDO::FETCH_ASSOC)) {
@@ -132,6 +138,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             
             $todayStr = date('Y-m-d');
+            
+            // Rebuild Permission Checks based on settings tiers
+            $is_admin = (strtolower($_SESSION['role'] ?? '') === 'admin');
+            $can_backdate = false;
+            if ($retro_setting === '2') {
+                $can_backdate = true; // Unlocked for everyone
+            } elseif ($retro_setting === '1' && $is_admin) {
+                $can_backdate = true; // Unlocked for Admins only
+            }
 
             foreach ($allocations as $alloc) {
                 $room_type = $alloc['room_type'];
@@ -140,7 +155,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $check_out = $alloc['check_out'];
 
                 if (!$isEdit && $check_in < $todayStr) {
-                    throw new Exception("Validation Error! You cannot book a room for a date in the past.");
+                    if (!$can_backdate) {
+                        throw new Exception("Security Error! Retroactive booking is disabled for your role. Please check settings.");
+                    }
                 }
 
                 $checkSql = "SELECT SUM(rooms_count) as booked_rooms FROM reservations WHERE room_type = ? AND status != 'Cancelled' AND check_in < ? AND check_out > ?";
@@ -156,7 +173,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $row = $checkStmt->fetch(PDO::FETCH_ASSOC);
                 $currently_booked = $row['booked_rooms'] ? (int)$row['booked_rooms'] : 0;
                 
-                // Use dynamic limit, default to 5 if room type suddenly missing
                 $max_available = $inventory_limits[$room_type] ?? 5;
 
                 if (($currently_booked + $rooms_count) > $max_available) {
@@ -178,12 +194,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $delStmt->execute([$edit_id]);
             }
 
+            // Mapped the booking_date explicitly, and passed is_historical
             $stmt = $pdo->prepare("INSERT INTO reservations (
-                guest_name, phone, email, check_in, check_out, guests_count, room_tier, guest_type, currency, 
+                guest_name, phone, email, booking_date, check_in, check_out, guests_count, room_tier, guest_type, currency, 
                 room_type, rooms_count, booking_officer, status, total_amount,
                 number_of_adults, number_of_children, children_under_12, children_own_rooms, child_discount_type,
-                booking_source, agency_name, discount, special_requests
-            ) VALUES (?, 'N/A', '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                booking_source, agency_name, discount, special_requests, is_historical
+            ) VALUES (?, 'N/A', '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             foreach ($allocations as $alloc) {
                 $currency = (strtolower($alloc['guest_type']) === 'resident') ? 'KES' : 'USD';
@@ -194,6 +211,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $line_discount = (float)($alloc['discount'] ?? 0);
                 $special_requests = trim($alloc['special_requests'] ?? '');
                 $discount_type = ($num_children > 0 && $child_under_12 == 1) ? (($child_own_rooms > 0) ? 'own_room' : 'sharing') : 'none';
+                
+                // Set the historical flag dynamically
+                $is_historical = ($alloc['check_in'] < $todayStr) ? 1 : 0;
 
                 $calc_results = calculateBookingTotal($pdo, $alloc['check_in'], $alloc['check_out'], $alloc['room_tier'], $alloc['room_type'], $alloc['guest_type'], $alloc['rooms_count'], $num_adults, $num_children, $child_under_12, $child_own_rooms, $line_discount);
                 
@@ -202,10 +222,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
 
                 $stmt->execute([
-                    $alloc['guest_name'], $alloc['check_in'], $alloc['check_out'], $alloc['guests_count'], 
+                    $alloc['guest_name'], $todayStr, $alloc['check_in'], $alloc['check_out'], $alloc['guests_count'], 
                     $alloc['room_tier'], $alloc['guest_type'], $currency, $alloc['room_type'], $alloc['rooms_count'], 
                     $booking_officer, $status, $calc_results['final_total'], $num_adults, $num_children,
-                    $child_under_12, $child_own_rooms, $discount_type, $booking_source, $agency_name, $calc_results['total_discount'], $special_requests
+                    $child_under_12, $child_own_rooms, $discount_type, $booking_source, $agency_name, $calc_results['total_discount'], $special_requests, $is_historical
                 ]);
             }
 
@@ -218,7 +238,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // 2. RECORD PAYMENT
     if (isset($_POST['ajax_record_payment'])) {
         try {
             $booking_id = (int)$_POST['booking_id'];
@@ -237,7 +256,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $booking = $bStmt->fetch();
 
             if (!$booking) throw new Exception("Invalid booking target reference.");
-            if ($booking['status'] === 'Reserved' && $booking['check_in'] < date('Y-m-d')) {
+            
+            // Only enforce expiration block if the booking is NOT an authorized historical record
+            if ($booking['status'] === 'Reserved' && $booking['check_in'] < date('Y-m-d') && $booking['is_historical'] == 0) {
                 throw new Exception("Booking hold has expired. Please edit the check-in date to a valid future date before accepting payment.");
             }
 
@@ -279,7 +300,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // 3. DELETE RESERVATION
     if (isset($_POST['ajax_delete_reservation'])) {
         try {
             $id = (int)$_POST['id'];
@@ -296,16 +316,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     exit;
 }
 
-// ==============================================================================
-// HANDLE GET REQUESTS (Data Fetching)
-// ==============================================================================
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['action'] === 'fetch_reservations') {
     
-    // 1. Fetch Dynamic Room Configuration Database
     $rStmt = $pdo->query("SELECT * FROM rooms ORDER BY id ASC");
     $dbRooms = $rStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Fetch Active Reservations
     $sql = "SELECT r.*, 
             (SELECT COALESCE(SUM(p.amount_paid), 0) FROM payments p WHERE p.booking_id = r.id AND p.currency = CASE WHEN LOWER(COALESCE(r.guest_type, 'resident')) = 'resident' THEN 'KES' ELSE 'USD' END) as actual_paid
             FROM reservations r WHERE r.status != 'Cancelled'";
@@ -360,6 +375,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['acti
             'checkIn' => $row['check_in'],
             'nights' => $nights,
             'receiptNo' => $row['receipt_no'] ?? null,
+            'isHistorical' => (int)($row['is_historical'] ?? 0),
             
             'actualCurrency' => $actual_currency,
             'totalAmount' => $total,
@@ -389,7 +405,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && $_GET['acti
         ];
     }
     
-    // Return both the reservations and the dynamic room array
     echo json_encode(['success' => true, 'data' => $jsReservations, 'rooms' => $dbRooms]);
     exit;
 }

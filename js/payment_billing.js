@@ -1,6 +1,5 @@
 // js/payment_billing.js
 
-// Initialize Top-Right Toast Notifications
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -64,6 +63,7 @@ function resetSearch() {
 function filterBillingTable() {
     const dateFilter = document.getElementById('dateFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
+    const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
     const today = new Date(); today.setHours(0,0,0,0);
 
     filteredRecords = globalBillingData.filter(item => {
@@ -87,7 +87,15 @@ function filterBillingTable() {
             showByStatus = (rowStatus === statusFilter);
         }
 
-        return showByDate && showByStatus;
+        let showBySearch = true;
+        if (searchVal !== '') {
+            const gName = (res.guest_name || '').toLowerCase();
+            const gId = String(res.id || '').toLowerCase();
+            const rNo = (res.receipt_no || '').toLowerCase();
+            showBySearch = gName.includes(searchVal) || gId.includes(searchVal) || rNo.includes(searchVal);
+        }
+
+        return showByDate && showByStatus && showBySearch;
     });
 
     currentPage = 1;
@@ -141,6 +149,7 @@ function renderTablePage() {
         if (status === 'Paid in Full') badgeClass = 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
         else if (status === 'Partially Paid') badgeClass = 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
         else if (status === 'Checked Out') badgeClass = 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800';
+        else if (status === 'Cancelled') badgeClass = 'bg-slate-800 text-white border-slate-900';
 
         let sourceHtml = `<span class="font-bold text-slate-700 dark:text-slate-300">${escapeHtml(res.booking_source || 'Direct Client')}</span>`;
         if (res.booking_source === 'Travel Agency') {
@@ -150,11 +159,14 @@ function renderTablePage() {
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/50";
-        tr.setAttribute('data-checkin', res.check_in);
-        tr.setAttribute('data-status', status);
 
         let actionBtnHtml = '';
-        if (status !== 'Cancelled' && res.status !== 'Checked Out') {
+        
+        // Rules Enforcement:
+        // 1. If cancelled -> Do NOT show Pay button.
+        // 2. If fully paid (balance <= 0) -> Do NOT show Pay button.
+        // 3. If partially paid or outstanding, and NOT cancelled -> Show Pay button as long as balance > 0.
+        if (status !== 'Cancelled' && bal > 0) {
             if (isPastDue) {
                 actionBtnHtml = `<span class="px-2 py-1 bg-rose-100 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 rounded font-bold text-[10px] uppercase">Expired Hold</span>`;
             } else {
@@ -284,7 +296,6 @@ function closeDocumentModal() {
     backdrop.classList.add('hidden'); backdrop.classList.remove('flex');
 }
 
-// Clean rendering logic utilizing the reliable bounding box approach
 function processPDFGeneration(filename) {
     const element = document.getElementById('printable-document-area');
     element.classList.remove('hidden');
@@ -306,23 +317,18 @@ function processPDFGeneration(filename) {
                 scale: 2, 
                 useCORS: true, 
                 letterRendering: true,
-                scrollY: 0 // Prevents scroll offset clipping
+                scrollY: 0 
             }, 
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
         }).from(element).save().then(() => { 
             element.classList.add('hidden');
-            Swal.close(); // Close the loading overlay
+            Swal.close(); 
             closeDocumentModal();
-            
-            // Fire the success toast
             Toast.fire({ icon: 'success', title: 'PDF successfully downloaded.' });
-            
         }).catch(err => {
             console.error("PDF Generation Error: ", err);
             element.classList.add('hidden'); 
-            Swal.close(); // Close the loading overlay
-            
-            // Fire the error toast
+            Swal.close(); 
             Toast.fire({ icon: 'error', title: 'Failed to compile the PDF document.' });
         });
     }, 300);

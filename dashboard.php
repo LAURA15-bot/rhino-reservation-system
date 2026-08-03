@@ -21,6 +21,10 @@ if ($theme === 'safari') $primaryColor = '#8B3C28';
 elseif ($theme === 'kairi') $primaryColor = '#802b1f';
 elseif ($theme === 'blue') $primaryColor = '#2563eb';
 elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38';
+
+// Verify Security Role and Operations Parameter
+$is_admin = strtolower($_SESSION['role'] ?? '') === 'admin';
+$retro_setting = (int)($set['allow_retroactive_bookings'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,8 +39,16 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Pass Security Parameters to JavaScript Environment -->
+    <script>
+        const IS_ADMIN = <?php echo $is_admin ? 'true' : 'false'; ?>;
+        const RETRO_SETTING = <?php echo $retro_setting; ?>;
+        // 0 = Locked, 1 = Admins Only, 2 = Everyone
+        const CAN_BACKDATE = (RETRO_SETTING === 2) || (RETRO_SETTING === 1 && IS_ADMIN);
+    </script>
+
     <!-- Version bump to clear cache and load Theme JS logic -->
-    <script src="js/dashboard.js?v=7" defer></script>
+    <script src="js/dashboard.js?v=9" defer></script>
     
     <style>
         :root {
@@ -86,7 +98,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                     </button>
                 </div>
 
-                <!-- METRICS GRID (Left alone for operational meaning) -->
+                <!-- METRICS GRID -->
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="room-metrics-grid"></div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
