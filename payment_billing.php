@@ -35,7 +35,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Script Cache Bust -->
-    <script src="js/payment_billing.js?v=8" defer></script>
+    <script src="js/payment_billing.js?v=10" defer></script>
     
     <style>
         :root {
@@ -81,48 +81,56 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 transition-colors duration-300">
+                    <!-- SEARCH & FILTERS SECTION (Restyled to match screenshot design) -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl custom-shadow border border-slate-100 dark:border-slate-700 flex flex-wrap items-end justify-between gap-4 transition-colors duration-300">
                         
-                        <form id="searchForm" onsubmit="handleSearchSubmit(event)" class="flex items-center gap-2 w-full md:w-auto flex-1 max-w-md">
-                            <div class="relative flex-1 flex items-center border border-slate-200 dark:border-slate-600 rounded-xl px-3 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
-                                <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 mr-2 text-xs"></i>
-                                <input type="text" id="searchInput" placeholder="Search by Guest Name, Booking ID..." class="bg-transparent py-2.5 w-full text-xs text-slate-700 dark:text-slate-300 outline-none">
+                        <div class="flex flex-wrap items-end gap-4 flex-1 w-full">
+                            
+                            <!-- Enlarged Live Search Bar matching screenshot design -->
+                            <div class="w-full lg:w-1/2 min-w-[300px] xl:max-w-4xl shrink-0">
+                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Live Search</label>
+                                <div class="relative flex items-center border border-slate-200 dark:border-slate-600 rounded-xl px-4 bg-slate-50 dark:bg-slate-900 transition-all duration-300 shadow-sm focus-within:ring-2 focus-within:border-transparent" style="--tw-ring-color: <?php echo $primaryColor; ?>;">
+                                    <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 mr-3 text-sm"></i>
+                                    <input type="text" id="searchInput" onkeyup="filterBillingTable()" placeholder="Search guest, agency, or officer..." class="bg-transparent py-3.5 w-full text-sm font-bold text-slate-800 dark:text-slate-200 outline-none placeholder-slate-400">
+                                    <button type="button" onclick="resetSearch()" title="Reset Search" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 ml-2 transition-colors">
+                                        <i class="fa-solid fa-rotate-right text-xs"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <button type="submit" class="theme-btn text-white font-bold py-2.5 px-5 rounded-xl text-xs transition shadow-sm">Search</button>
-                            <button type="button" onclick="resetSearch()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors duration-300">Reset</button>
-                        </form>
 
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:block">Per Page:</label>
-                                <select id="rowsPerPageFilter" onchange="changeRowsPerPage()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg block p-2 cursor-pointer outline-none transition-colors duration-300">
+                            <!-- Per Page Filter -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Per Page</label>
+                                <select id="rowsPerPageFilter" onchange="changeRowsPerPage()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-24 p-3.5 cursor-pointer transition-colors duration-300">
                                     <option value="10">10</option>
                                     <option value="20">20</option>
                                     <option value="50">50</option>
                                     <option value="all">All</option>
                                 </select>
                             </div>
-                            
-                            <div class="flex items-center gap-2">
-                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:block">Timeframe:</label>
-                                <select id="dateFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg block p-2 cursor-pointer outline-none transition-colors duration-300" onchange="filterBillingTable();">
+
+                            <!-- Timeframe Filter -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Timeframe</label>
+                                <select id="dateFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-48 p-3.5 cursor-pointer transition-colors duration-300" onchange="filterBillingTable();">
                                     <option value="all">All Available History</option>
                                     <option value="today">Today</option>
                                     <option value="7">Past 7 Days</option>
                                     <option value="30">Past 30 Days</option>
                                 </select>
                             </div>
-                            
-                            <div class="flex items-center gap-2">
-                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:block">Status:</label>
-                                <select id="statusFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg block p-2 cursor-pointer outline-none transition-colors duration-300" onchange="filterBillingTable();">
-                                    <option value="All Statuses">All Statuses</option>
-                                    <option value="Paid in Full">Paid in Full</option>
-                                    <option value="Partially Paid">Partially Paid</option>
-                                    <option value="Outstanding">Outstanding</option>
-                                    <option value="Checked Out">Checked Out</option>
-                                </select>
-                            </div>
+                        </div>
+
+                        <!-- Registration Status Filter -->
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Registration Status</label>
+                            <select id="statusFilter" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg theme-focus block w-full sm:w-48 p-3.5 cursor-pointer transition-colors duration-300" onchange="filterBillingTable();">
+                                <option value="All Statuses">All Statuses</option>
+                                <option value="Paid in Full">Paid in Full</option>
+                                <option value="Partially Paid">Partially Paid</option>
+                                <option value="Outstanding">Outstanding</option>
+                                <option value="Checked Out">Checked Out</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -175,16 +183,16 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
         </main>
     </div>
 
-    <!-- PAYMENT MODAL -->
+    <!-- PAYMENT MODAL (Enlarged to max-w-xl) -->
     <div id="payment-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 transition-colors duration-300">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-5 relative animate-fadeIn transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-5 relative animate-fadeIn transition-colors duration-300">
             <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-base"></i></button>
             <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3 transition-colors">
                 <i class="fa-solid fa-cash-register theme-text"></i> Record Payment for <span id="modal-guest-name" class="theme-text"></span>
             </h2>
             <form onsubmit="submitPaymentViaAjax(event)" class="space-y-4">
                 <input type="hidden" name="booking_id" id="modal-booking-id">
-                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-2 text-xs transition-colors duration-300">
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-3 text-xs transition-colors duration-300">
                     <div><span class="text-slate-400 dark:text-slate-500 block">Adult Portion:</span> <strong id="modal-display-adult-portion" class="text-slate-700 dark:text-slate-300"></strong></div>
                     <div><span class="text-slate-400 dark:text-slate-500 block">Child Portion:</span> <strong id="modal-display-child-portion" class="text-slate-700 dark:text-slate-300"></strong></div>
                     <div id="modal-discount-wrapper" class="col-span-2 hidden"><span class="text-rose-500 dark:text-rose-400 block font-bold text-[10px] uppercase">Discount: <strong id="modal-display-discount"></strong></span></div>
@@ -195,34 +203,34 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Amount *</label>
-                        <input type="number" step="0.01" name="amount_paid" id="input-amount-paid" required class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2.5 text-xs font-bold transition-colors">
+                        <input type="number" step="0.01" name="amount_paid" id="input-amount-paid" required class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-3 text-xs font-bold transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Currency *</label>
-                        <input type="text" id="input-currency" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-500 rounded-lg p-2.5 text-xs font-bold transition-colors" readonly>
+                        <input type="text" id="input-currency" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-500 rounded-lg p-3 text-xs font-bold transition-colors" readonly>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Method *</label>
-                        <select name="payment_method" id="input-payment-method" onchange="toggleReferenceField()" class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2.5 text-xs font-bold transition-colors"><option value="Cash">Cash</option><option value="M-Pesa">M-Pesa</option><option value="Bank Transfer">Bank Transfer</option></select>
+                        <select name="payment_method" id="input-payment-method" onchange="toggleReferenceField()" class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-3 text-xs font-bold transition-colors"><option value="Cash">Cash</option><option value="M-Pesa">M-Pesa</option><option value="Bank Transfer">Bank Transfer</option></select>
                     </div>
                     <div id="reference-wrapper">
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1" id="label-ref">Reference *</label>
-                        <input type="text" name="reference_no" id="input-reference-no" placeholder="Ref code" class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-2.5 text-xs transition-colors">
+                        <input type="text" name="reference_no" id="input-reference-no" placeholder="Unique Ref Code" class="theme-focus w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg p-3 text-xs transition-colors">
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700 transition-colors">
                     <button type="button" onclick="closePaymentModal()" class="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-                    <button type="submit" class="theme-btn text-white font-bold py-2 px-5 rounded-xl text-xs transition-colors">Submit</button>
+                    <button type="submit" class="theme-btn text-white font-bold py-2.5 px-6 rounded-xl text-xs transition-colors">Submit Payment</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- DOCUMENT MODAL (Dark Mode Support) -->
+    <!-- DOCUMENT MODAL (Enlarged to max-w-lg) -->
     <div id="document-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 transition-colors duration-300">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-4 relative animate-fadeIn transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-4 relative animate-fadeIn transition-colors duration-300">
             <button onclick="closeDocumentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-base"></i></button>
             <h2 class="text-base font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-3 transition-colors">Documents for <span id="doc-guest-name" class="theme-text"></span></h2>
             <div class="space-y-3">
@@ -232,10 +240,8 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
         </div>
     </div>
 
-    <!-- PRINT AREA (Pre-rendered via Tailwind hidden class to maintain DOM flow) -->
+    <!-- PRINT AREA -->
     <div id="printable-document-area" class="hidden bg-white px-8 py-6 w-full max-w-2xl mx-auto text-slate-800 font-sans text-xs relative overflow-hidden">
-        
-        <!-- Dynamic Anti-Forgery Watermark -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
             <?php if (($set['watermark_type'] ?? 'text') === 'image' && !empty($set['watermark_image_path'])): ?>
                 <img src="<?php echo htmlspecialchars($set['watermark_image_path']); ?>" alt="Watermark" class="w-3/4 h-3/4 object-contain opacity-30" style="filter: grayscale(100%);">
@@ -246,10 +252,7 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
             <?php endif; ?>
         </div>
 
-        <!-- Content Wrapper (Keeps text above the watermark) -->
         <div class="relative z-10">
-            
-            <!-- Dynamic PDF Header Upload -->
             <?php if (!empty($set['receipt_header_path'])): ?>
                 <div class="w-full text-center mb-6 border-b-2 border-slate-200 pb-4">
                     <img src="<?php echo htmlspecialchars($set['receipt_header_path']); ?>" alt="Company Header" class="w-full object-contain max-h-28 inline-block">
@@ -260,12 +263,10 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                 </div>
             <?php endif; ?>
 
-            <!-- Document Title -->
             <div class="text-center mb-6">
                 <h2 id="doc-title-badge" class="text-2xl font-bold uppercase tracking-widest text-black" style="font-family: 'Times New Roman', Times, serif;">Official Receipt</h2>
             </div>
             
-            <!-- Booking Info Table -->
             <table class="w-full mb-6 border-collapse">
                 <tr>
                     <td class="w-1/2 align-top p-3 bg-slate-50 border border-slate-200 rounded-l-xl">
@@ -283,7 +284,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                 </tr>
             </table>
             
-            <!-- Financial Ledger Table -->
             <table class="w-full text-left border-collapse border border-slate-300 mb-6">
                 <thead>
                     <tr class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider border-b-2 border-slate-400">
@@ -321,7 +321,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                 </tbody>
             </table>
 
-            <!-- Dynamic PDF Footer Upload -->
             <?php if (!empty($set['receipt_footer_path'])): ?>
                 <div class="w-full text-center mt-6 pt-3 border-t-2 border-slate-200">
                     <img src="<?php echo htmlspecialchars($set['receipt_footer_path']); ?>" alt="Company Footer" class="w-full object-contain max-h-20 inline-block">
@@ -331,7 +330,6 @@ elseif ($theme === 'custom') $primaryColor = $set['custom_primary'] ?? '#046a38'
                     <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">THANK YOU FOR CHOOSING <?php echo htmlspecialchars($set['sidebar_title']); ?></p>
                 </div>
             <?php endif; ?>
-
         </div>
     </div>
 </body>

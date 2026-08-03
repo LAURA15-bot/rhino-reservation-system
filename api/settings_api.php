@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
     try {
         $settings = [];
         
-        // Define all permissible string fields
+        // Define all permissible string fields (Added allow_retroactive_bookings)
         $allowed_keys = [
             'header_display_type', 'header_title', 'header_subtitle', 'header_icon', 
             'sidebar_display_type', 'sidebar_title', 'sidebar_subtitle', 'sidebar_icon', 
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
             'nav_guest_name', 'nav_guest_icon', 'nav_alerts_name', 'nav_alerts_icon',
             'nav_rates_name', 'nav_rates_icon', 'nav_finance_name', 'nav_finance_icon',
             'footer_text', 'theme_color', 'custom_primary', 'custom_secondary',
-            'watermark_type', 'watermark_text'
+            'watermark_type', 'watermark_text', 'allow_retroactive_bookings'
         ];
 
         foreach ($allowed_keys as $key) {
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
         $ip = $_SERVER['REMOTE_ADDR'];
         $section = $_POST['section_name'] ?? 'System';
         $pdo->prepare("INSERT INTO system_logs (username, role, action_code, action, ip_address) VALUES (?, ?, 'SETTINGS_UPDATE', ?, ?)")
-            ->execute([$_SESSION['username'], $_SESSION['role'], "Updated {$section} branding and preferences.", $ip]);
+            ->execute([$_SESSION['username'], $_SESSION['role'], "Updated {$section} configuration and preferences.", $ip]);
 
         ob_clean();
         echo json_encode(['success' => true, 'message' => "{$section} successfully saved!"]);
