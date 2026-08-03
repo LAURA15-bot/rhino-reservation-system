@@ -1,4 +1,5 @@
 -- Fresh Database Schema for Rhino Tourist Camp Production Handoff
+-- Includes structural upgrades and zero-transaction isolation.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -13,6 +14,11 @@ CREATE TABLE `booking_officers` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO `booking_officers` (`id`, `name`) VALUES
+(1, 'Sarah Rep'),
+(2, 'Grace'),
+(3, 'Front Desk');
+
 -- --------------------------------------------------------
 -- 2. Table structure for table `reservations`
 -- --------------------------------------------------------
@@ -21,6 +27,7 @@ CREATE TABLE `reservations` (
   `guest_name` varchar(100) NOT NULL,
   `phone` varchar(20) NOT NULL,
   `email` varchar(100) DEFAULT NULL,
+  `booking_date` date DEFAULT NULL,
   `check_in` date NOT NULL,
   `check_out` date NOT NULL,
   `number_of_adults` int(11) NOT NULL DEFAULT 1,
