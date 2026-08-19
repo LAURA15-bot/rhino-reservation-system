@@ -7,6 +7,13 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header("Location: dashboard.php");
     exit;
 }
+
+// Fetch system settings to dynamically load the brand logo as the Favicon
+if (!isset($GLOBALS['system_settings'])) {
+    require_once __DIR__ . '/Includes/load_settings.php';
+}
+$set = $GLOBALS['system_settings'];
+$faviconPath = !empty($set['logo_path']) ? $set['logo_path'] : 'data:image/x-icon;base64,'; 
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +21,9 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhino Tourist Camp - System Terminal</title>
+    
+    <!-- Dynamic Favicon Override to replace XAMPP logo -->
+    <link rel="icon" type="image/png" href="<?php echo htmlspecialchars($faviconPath); ?>">
     
     <!-- Load Tailwind for structural layout -->
     <script src="https://cdn.tailwindcss.com"></script>

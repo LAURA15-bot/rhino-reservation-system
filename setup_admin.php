@@ -32,6 +32,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Setup - Rhino Reservation</title>
+	
+	<!-- Dynamic Favicon Override -->
+	<link rel="icon" type="image/png" href="<?php echo !empty($set['logo_path']) ? htmlspecialchars($set['logo_path']) : 'data:image/x-icon;base64,'; ?>">
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="login-body">

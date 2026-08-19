@@ -14,6 +14,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Reservation - Rhino Camp</title>
+	
+	<!-- Dynamic Favicon Override -->
+	<link rel="icon" type="image/png" href="<?php echo !empty($set['logo_path']) ? htmlspecialchars($set['logo_path']) : 'data:image/x-icon;base64,'; ?>">
+	
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Configure Tailwind to listen to our dark mode toggle script

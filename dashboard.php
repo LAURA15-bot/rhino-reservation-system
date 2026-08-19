@@ -32,6 +32,10 @@ $retro_setting = (int)($set['allow_retroactive_bookings'] ?? 0);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhino Tourist Camp - Reservation Management</title>
+	
+	<!-- Dynamic Favicon Override -->
+	<link rel="icon" type="image/png" href="<?php echo !empty($set['logo_path']) ? htmlspecialchars($set['logo_path']) : 'data:image/x-icon;base64,'; ?>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class', }
